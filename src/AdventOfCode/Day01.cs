@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -10,7 +9,6 @@ namespace AdventOfCode
     /// </summary>
     public class Day01
     {
-        
         public int Part1()
         {
             int[] elements = File.ReadLines("inputs/day01.txt").Select(int.Parse).ToArray();
@@ -28,7 +26,7 @@ namespace AdventOfCode
             while (true)
             {
                 frequency += elements[seen.Count % elements.Length];
-                
+
                 if (seen.Contains(frequency))
                 {
                     return frequency;
