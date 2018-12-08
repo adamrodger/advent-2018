@@ -13,105 +13,95 @@ namespace AdventOfCode
         public static char NextId = 'A';
 
         /// <summary>
-        /// 
         /// A header, which is always exactly two numbers:
         ///     The quantity of child nodes.
         ///     The quantity of metadata entries.
         /// Zero or more child nodes(as specified in the header).
         /// One or more metadata entries(as specified in the header).
-        ///
-        /// 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2
         /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
+        /// <example>
+        /// 2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2
+        /// </example>
+        /// <param name="input">File input</param>
+        /// <returns>Part 1 and part 2</returns>
         public (int, int) Solve(string input)
         {
-            int[] numbers = input.Split(' ').Select(int.Parse).ToArray();
-            int index = 0;
-            (int part1, int part2) = this.SumMetadata(numbers, null, ref index);
+            var numbers = new Queue<int>(input.Split(' ').Select(int.Parse));
+
+            Node root = this.BuildTree(numbers);
+
+            int part1 = this.SumMetadata(root);
+            int part2 = this.ScoreMetadata(root);
 
             return (part1, part2);
         }
 
-        public (int, int) SumMetadata(int[] input, Node parent, ref int offset)
+        /// <summary>
+        /// Parse the input to generate the node tree with attached metadata
+        /// </summary>
+        /// <param name="input">Numeric input</param>
+        /// <returns>Fully populated root node</returns>
+        private Node BuildTree(Queue<int> input)
         {
             var node = new Node { Id = NextId++ };
 
-            // root node has no parent
-            if (parent != null)
-            {
-                parent.ChildNodes.Add(node);
-            }
+            int children = input.Dequeue();
+            int metadata = input.Dequeue();
 
-            // get the header values and advance the offset
-            int children = input[offset++];
-            int metadata = input[offset++];
-
-            // recurse into children starting at the new offset
+            // recurse to add child nodes
             for (int i = 0; i < children; i++)
             {
-                node.MetadataSum += this.SumMetadata(input, node, ref offset).Item1;
+                Node childNode = this.BuildTree(input);
+                node.ChildNodes.Add(childNode);
             }
 
-            // add up metadata from the offset
-            for (int i = offset; i < offset + metadata; i++)
+            // record the metadata for this node
+            for (int i = 0; i < metadata; i++)
             {
-                node.MetadataValues.Add(input[i]);
-                node.MetadataSum += input[i];
+                node.Metadata.Add(input.Dequeue());
             }
 
-            // skip the offset over the metadata to the next node
-            offset += node.MetadataValues.Count;
-
-            int childTotal = 0;
-
-            // we've reached the end, calc the root node
-            if (offset == input.Length)
-            {
-                this.CalculateTreeSum(node, ref childTotal);
-            }
-
-            return (node.MetadataSum, childTotal);
+            return node;
         }
 
         /// <summary>
-        /// Use the metadata to sum child node values recursively
-        ///
-        /// Leaf nodes are the sum of their metadata values
-        /// Branch nodes are the sum of their child nodes at the indices of their metadata (if they exist)
+        /// Recurse into child nodes and sum all the metadata
         /// </summary>
-        private void CalculateTreeSum(Node node, ref int total)
+        /// <param name="node">Current node</param>
+        /// <returns>Total of this node and all child nodes</returns>
+        private int SumMetadata(Node node)
         {
-            foreach (int childIndex in node.MetadataValues)
+            return node.Metadata.Sum() + node.ChildNodes.Select(n => this.SumMetadata(n)).Sum();
+        }
+
+        /// <summary>
+        /// Score each node where:
+        ///
+        /// - Leaf nodes are scored as the sum of their metadata
+        /// - Branch nodes are the sum of their child nodes, where the branch metadata indicates which child to pick (if relevant)
+        /// </summary>
+        /// <param name="node">Current node</param>
+        /// <returns>Score of this node, having taken into account child nodes</returns>
+        private int ScoreMetadata(Node node)
+        {
+            if (!node.ChildNodes.Any())
             {
-                if (!node.ChildNodes.Any() || childIndex > node.ChildNodes.Count)
-                {
-                    continue;
-                }
-
-                // child index is 1-based, not 0-based
-                var childNode = node.ChildNodes.ElementAt(childIndex - 1);
-
-                if (childNode.ChildNodes.Any())
-                {
-                    // recurse
-                    this.CalculateTreeSum(childNode, ref total);
-                }
-                else
-                {
-                    // leaf nodes are the sum of their metadata
-                    total += childNode.MetadataValues.Sum();
-                }
+                // leaf nodes are just the sum of metadata
+                return node.Metadata.Sum();
             }
+
+            // branch nodes are the sum of child nodes at the metadata indices
+            return node.Metadata
+                       .Where(m => m > 0 && m <= node.ChildNodes.Count) // metadata is only valid if it points to a child node (1-indexed)
+                       .Select(i => this.ScoreMetadata(node.ChildNodes[i - 1]))
+                       .Sum();
         }
 
         public class Node
         {
             public char Id { get; set; }
 
-            public int MetadataSum { get; set; }
-
-            public List<int> MetadataValues { get; set; } = new List<int>();
+            public List<int> Metadata { get; set; } = new List<int>();
 
             public List<Node> ChildNodes { get; set; } = new List<Node>();
 
@@ -119,7 +109,7 @@ namespace AdventOfCode
             /// <returns>A string that represents the current object.</returns>
             public override string ToString()
             {
-                return $"{this.Id}, Children: {this.ChildNodes.Count}, Metadata: {this.MetadataValues.Count}, Current Sum: {this.MetadataSum}";
+                return $"{this.Id}, Children: {this.ChildNodes.Count}, Metadata: {this.Metadata.Count}";
             }
         }
     }
