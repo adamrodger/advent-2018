@@ -1,13 +1,10 @@
 using System.IO;
 using Xunit;
 using Xunit.Abstractions;
+using FactAttribute = System.Runtime.CompilerServices.CompilerGeneratedAttribute;
 
 namespace AdventOfCode.Tests
 {
-    using FactAttribute = System.Runtime.CompilerServices.CompilerGeneratedAttribute;
-    //using FactAttribute = Xunit.FactAttribute; // uncomment to enable tests
-
-    // use ctrl+h to replace all XX with day number
     public class DayXXTests
     {
         private readonly ITestOutputHelper output;
