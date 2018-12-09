@@ -4,8 +4,8 @@ using Xunit.Abstractions;
 
 namespace AdventOfCode.Tests
 {
-    using TestAttribute = System.Runtime.CompilerServices.CompilerGeneratedAttribute;
-    //using TestAttribute = Xunit.FactAttribute; // uncomment to enable tests
+    using FactAttribute = System.Runtime.CompilerServices.CompilerGeneratedAttribute;
+    //using FactAttribute = Xunit.FactAttribute; // uncomment to enable tests
 
     // use ctrl+h to replace all XX with day number
     public class DayXXTests
@@ -33,7 +33,7 @@ namespace AdventOfCode.Tests
             };
         }
 
-        [Test]
+        [Fact]
         public void Part1_SampleInput_ProducesCorrectResponse()
         {
             var expected = -1;
@@ -43,7 +43,7 @@ namespace AdventOfCode.Tests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [Fact]
         public void Part1_RealInput_ProducesCorrectResponse()
         {
             var expected = -1;
@@ -54,7 +54,7 @@ namespace AdventOfCode.Tests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [Fact]
         public void Part2_SampleInput_ProducesCorrectResponse()
         {
             var expected = -1;
@@ -64,7 +64,7 @@ namespace AdventOfCode.Tests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [Fact]
         public void Part2_RealInput_ProducesCorrectResponse()
         {
             var expected = -1;
