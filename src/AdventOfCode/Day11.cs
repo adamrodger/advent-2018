@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace AdventOfCode
 {
@@ -38,7 +39,7 @@ namespace AdventOfCode
         {
             int[,] grid = BuildGrid(input);
 
-            int[,,] memoised = new int[300, 300, 300];
+            var previous = new Dictionary<(int, int), int>();
 
             (int x, int y, int size) largest = (0, 0, 0);
             int largestPower = 0;
@@ -52,7 +53,7 @@ namespace AdventOfCode
                     {
                         // don't redo all the work of the previous square size, just use the memoised version
                         // then add the extra row and column for the new size
-                        int totalPower = memoised[x, y, size - 1];
+                        previous.TryGetValue((x, y), out int totalPower);
                         
                         // add the extra row
                         int rowIndex = y + size - 1;
@@ -69,7 +70,7 @@ namespace AdventOfCode
                         }
 
                         // memoise for next size iteration
-                        memoised[x, y, size] = totalPower;
+                        previous[(x, y)] = totalPower;
 
                         // keep track of largest so far
                         if (totalPower > largestPower)
