@@ -1,7 +1,8 @@
 language: csharp
 mono: none
-dotnet: 2.0.3
-dist: trusty
+dotnet: 2.1
+dist: xenial
 script:
- - dotnet test tests/AdventOfCode.Tests/AdventOfCode.Tests.csproj
+ - dotnet build
+ - dotnet test --no-build tests/AdventOfCode.Tests/AdventOfCode.Tests.csproj
  
