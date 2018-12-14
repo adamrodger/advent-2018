@@ -34,7 +34,7 @@ namespace AdventOfCode.Tests
         [InlineData("92510", 18)]
         [InlineData("59414", 2018)]
         [InlineData("286051", 20195114)]
-        public void Part2_SampleInput_ProducesCorrectResponse(string searchTerm, int expected)
+        public void Part2_WhenCalled_ProducesCorrectResponse(string searchTerm, int expected)
         {
             var result = solver.Part2(searchTerm);
 

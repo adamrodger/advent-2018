@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace AdventOfCode
@@ -42,6 +40,7 @@ namespace AdventOfCode
 
         public int Part2(string input)
         {
+            var search = input.Select(c => int.Parse(c.ToString())).ToArray();
             var recipes = new List<int>(25000000) { 3, 7 };
 
             int position1 = 0;
@@ -71,16 +70,25 @@ namespace AdventOfCode
 
             bool CheckSearchTerm(out int result)
             {
-                string slice = string.Join("", recipes.Skip(recipes.Count - input.Length));
-
-                if (slice == input)
+                if (recipes.Count < search.Length)
                 {
-                    result = recipes.Count - input.Length;
-                    return true;
+                    result = -1;
+                    return false;
                 }
 
-                result = -1;
-                return false;
+                int offset = recipes.Count - search.Length;
+
+                for (int i = 0; i < search.Length; i++)
+                {
+                    if (recipes[offset + i] != search[i])
+                    {
+                        result = -1;
+                        return false;
+                    }
+                }
+
+                result = recipes.Count - input.Length;
+                return true;
             }
         }
     }
