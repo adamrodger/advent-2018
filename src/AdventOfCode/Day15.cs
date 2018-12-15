@@ -12,9 +12,9 @@ namespace AdventOfCode
     /// </summary>
     public class Day15
     {
-        public int Part1(string[] input)
+        public int Part1(string[] input, int elfPower = 3)
         {
-            var map = new Map(input);
+            var map = new Map(input, elfPower);
             var round = 0;
 
             // stop when only 1 type remains
@@ -25,14 +25,12 @@ namespace AdventOfCode
                     // only increment if the entire round completed fully
                     round++;
 
-                    Debug.WriteLine($"End of round {round}:\n");
-                    PrintState(input, map);
+                    PrintState(input, map, "After", round);
                 }
                 else
                 {
-                    // TODO: There's an off-by-one error in here which makes the sample input fail
-                    Debug.WriteLine($"Finished at {round}:\n");
-                    PrintState(input, map);
+                    // TODO: There's an off-by-one error in here which makes the sample input fail because it stops 1 round too soon
+                    PrintState(input, map, "Finished on", round);
                     break;
                 }
             }
@@ -40,12 +38,14 @@ namespace AdventOfCode
             return round * map.Players.Where(p => p.Alive).Select(p => p.HP).Sum();
         }
 
-        private static void PrintState(string[] input, Map map)
+        private static void PrintState(string[] input, Map map, string messagePrefix, int round)
         {
             if (!Debugger.IsAttached)
             {
                 return;
             }
+
+            Debug.WriteLine($"{messagePrefix} round {round}:");
 
             // print end of round
             for (int y = 0; y < input.Length; y++)
@@ -89,22 +89,36 @@ namespace AdventOfCode
 
         public int Part2(string[] input)
         {
-            foreach (string line in input)
+            int power = 4;
+            int result;
+            
+            do
             {
-                throw new NotImplementedException("Part 2 not implemented");
-            }
+                try
+                {
+                    result = Part1(input, power++);
+                }
+                catch (InvalidOperationException e)
+                {
+                    Debug.WriteLine(e.Message);
+                    result = -1;
+                }
+            } while (result == -1); // mmmmmmmm error codes
 
-            return 0;
+            return result;
         }
     }
 
     public class Map
     {
+        private readonly int elfPower;
+
         public Dictionary<(int x, int y), bool> Tiles { get; }
         public List<Player> Players { get; }
 
-        public Map(string[] input)
+        public Map(string[] input, int elfPower)
         {
+            this.elfPower = elfPower;
             this.Tiles = new Dictionary<(int x, int y), bool>(input.Length * input.Length);
             this.Players = new List<Player>();
             this.ParseInput(input);
@@ -125,7 +139,7 @@ namespace AdventOfCode
                     if (tile == 'G' || tile == 'E')
                     {
                         // parse the player
-                        var player = new Player(tile, x, y);
+                        var player = new Player(tile, x, y, tile == 'E' ? this.elfPower : 3);
                         this.Players.Add(player);
                     }
                 }
@@ -167,10 +181,11 @@ namespace AdventOfCode
 
         public bool Alive => this.HP > 0;
 
-        public Player(char tile, int x, int y)
+        public Player(char tile, int x, int y, int ap)
         {
             this.Type = tile == 'E' ? PlayerType.E : PlayerType.G;
             this.Location = (x, y);
+            this.AP = ap;
         }
 
         public void TakeTurn(Map map)
@@ -228,7 +243,11 @@ namespace AdventOfCode
             if (enemy != null)
             {
                 enemy.HP -= this.AP;
-                return;
+
+                if (!enemy.Alive && enemy.Type == PlayerType.E && enemy.AP > 3) // part 2 ratchets elf power up
+                {
+                    throw new InvalidOperationException($"Elf died at power {enemy.AP}");
+                }
             }
         }
     }
