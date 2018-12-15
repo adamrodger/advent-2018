@@ -27,9 +27,11 @@ namespace AdventOfCode.Tests
             return new string[]
             {
                 "#######",
-                "#E..G.#",
-                "#...#.#",
-                "#.G.#G#",
+                "#.G...#",
+                "#...EG#",
+                "#.#.#G#",
+                "#..G#E#",
+                "#.....#",
                 "#######"
             };
         }
@@ -37,7 +39,7 @@ namespace AdventOfCode.Tests
         [Fact]
         public void Part1_SampleInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            var expected = 27730;
 
             var result = solver.Part1(GetSampleInput());
 
@@ -47,7 +49,7 @@ namespace AdventOfCode.Tests
         [Fact]
         public void Part1_RealInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            var expected = 221754;
 
             var result = solver.Part1(GetRealInput());
             output.WriteLine($"Day 15 - Part 1 - {result}");
