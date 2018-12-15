@@ -26,7 +26,11 @@ namespace AdventOfCode.Tests
         {
             return new string[]
             {
-                
+                "#######",
+                "#E..G.#",
+                "#...#.#",
+                "#.G.#G#",
+                "#######"
             };
         }
 
