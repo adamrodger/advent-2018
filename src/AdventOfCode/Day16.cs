@@ -89,34 +89,16 @@ namespace AdventOfCode
 
             foreach (Transition transition in trainingSet)
             {
-                int matches = 0;
+                var outputs = this.instructions
+                                  .Keys
+                                  .ToDictionary(i => i, i => this.Execute(transition.Before, transition.Operation, i));
 
-                foreach (var instruction in this.instructions)
-                {
-                    int[] output = this.Execute(transition.Before, transition.Operation, instruction.Key);
+                var matches = outputs.Where(o => o.Value.SequenceEqual(transition.After)).ToList();
 
-                    // check for match
-                    bool match = true;
+                // add all candidates for that opcode
+                this.candidates.GetOrCreate(transition.Operation[0]).UnionWith(matches.Select(m => m.Key));
 
-                    for (int i = 0; i < transition.After.Length; i++)
-                    {
-                        if (output[i] != transition.After[i])
-                        {
-                            match = false;
-                            break;
-                        }
-                    }
-
-                    if (match)
-                    {
-                        matches++;
-
-                        // mark this opcode as a potential mapping for this instruction
-                        this.candidates.GetOrCreate(transition.Operation[0]).Add(instruction.Key);
-                    }
-                }
-
-                if (matches >= 3)
+                if (matches.Count >= 3)
                 {
                     manyMatches++;
                 }

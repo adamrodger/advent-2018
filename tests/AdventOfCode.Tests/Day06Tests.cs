@@ -4,8 +4,6 @@ using Xunit.Abstractions;
 
 namespace AdventOfCode.Tests
 {
-    using TestAttribute = Xunit.FactAttribute;
-
     public class Day06Tests
     {
         private readonly ITestOutputHelper output;
@@ -36,7 +34,7 @@ namespace AdventOfCode.Tests
             };
         }
 
-        [Test]
+        [Fact]
         public void Part1_SampleInput_ProducesCorrectResponse()
         {
             // aaaaa.cccc
@@ -57,7 +55,7 @@ namespace AdventOfCode.Tests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [Fact]
         public void Part1_RealInput_ProducesCorrectResponse()
         {
             var expected = 4342;
@@ -68,7 +66,7 @@ namespace AdventOfCode.Tests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [Fact]
         public void Part2_SampleInput_ProducesCorrectResponse()
         {
             var expected = 16;
@@ -78,7 +76,7 @@ namespace AdventOfCode.Tests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [Fact]
         public void Part2_RealInput_ProducesCorrectResponse()
         {
             var expected = 42966;

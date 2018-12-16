@@ -1,17 +1,13 @@
-using System.IO;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace AdventOfCode.Tests
 {
     public class Day14Tests
     {
-        private readonly ITestOutputHelper output;
         private readonly Day14 solver;
 
-        public Day14Tests(ITestOutputHelper output)
+        public Day14Tests()
         {
-            this.output = output;
             this.solver = new Day14();
         }
 

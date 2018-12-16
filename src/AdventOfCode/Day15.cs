@@ -5,7 +5,6 @@ namespace AdventOfCode
     using System.Diagnostics;
     using System.Linq;
     using MoreLinq;
-    using Nito.Collections;
 
     /// <summary>
     /// Solver for Day 15
@@ -364,8 +363,8 @@ namespace AdventOfCode
         public (int x, int y) FindNewLocation((int x, int y) startLocation, ICollection<(int x, int y)> endLocations)
         {
             // create a collection of locations to check along with their distance from the start location so far
-            var toVisit = new Deque<((int x, int y) location, int depth)>();
-            toVisit.AddToBack((startLocation, 0));
+            var toVisit = new Queue<((int x, int y) location, int depth)>();
+            toVisit.Enqueue((startLocation, 0));
 
             // keep track of where we've already visited
             var visited = new HashSet<(int x, int y)>();
@@ -376,7 +375,7 @@ namespace AdventOfCode
             // bread-first search to find valid moves
             while (toVisit.Any())
             {
-                (var current, var distance) = toVisit.RemoveFromFront();
+                (var current, var distance) = toVisit.Dequeue();
 
                 // from the current location, try and branch out to all valid adjacent locations (if there are any)
                 foreach ((int x, int y) next in current.ReachableTiles(this.map))
@@ -393,7 +392,7 @@ namespace AdventOfCode
                     if (!alreadyVisited && !alreadyQueued)
                     {
                         // queue this location up for checking
-                        toVisit.AddToBack((next, distance + 1));
+                        toVisit.Enqueue((next, distance + 1));
                     }
                 }
 

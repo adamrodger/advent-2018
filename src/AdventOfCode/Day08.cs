@@ -1,5 +1,3 @@
-using System;
-
 namespace AdventOfCode
 {
     using System.Collections.Generic;

@@ -7,7 +7,6 @@ namespace AdventOfCode
     /// </summary>
     public class Day05
     {
-
         public int React(string input)
         {
             bool found = false;
