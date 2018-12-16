@@ -1,9 +1,7 @@
-using System;
-
 namespace AdventOfCode
 {
+    using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
 
     /// <summary>
@@ -11,9 +9,29 @@ namespace AdventOfCode
     /// </summary>
     public class Day16
     {
-        public int Part1(string[] input)
+        public (int, int) Solve(string[] input)
         {
-            List<Transition> transitions = new List<Transition>();
+            var processor = new Processor();
+            List<Transition> transitions = ParseTrainingSet(input);
+            
+            // part 1 - number of training operations which matched 3 or more instructions
+            int part1 = processor.Train(transitions);
+
+            // part 2 - execute the program and get the final value of register 0
+            var current = new int[4];
+
+            foreach (string line in input.Skip(3146)) // sample program starts on line 3147
+            {
+                var instruction = line.Split(' ').Select(int.Parse).ToArray();
+                current = processor.Execute(current, instruction);
+            }
+
+            return (part1, current[0]);
+        }
+
+        private static List<Transition> ParseTrainingSet(string[] input)
+        {
+            var transitions = new List<Transition>();
 
             for (int i = 0; i < input.Length; i += 4)
             {
@@ -28,198 +46,145 @@ namespace AdventOfCode
                 transitions.Add(transition);
             }
 
-            var processor = new Processor();
-
-            int part1 = transitions.Count(transition => processor.Train(transition) >= 3);
-
-            var map = new Dictionary<int, string>();
-
-            /*foreach (KeyValuePair<int, HashSet<string>> candidate in processor.Candidates)
-            {
-                Debug.WriteLine($"{candidate.Key}: {string.Join(", ", candidate.Value)}");
-            }*/
-
-            // boil down the candidates list
-            while (processor.Candidates.Any())
-            {
-                var unique = processor.Candidates.First(c => c.Value.Count == 1);
-                string instruction = unique.Value.First();
-                map[unique.Key] = instruction;
-                processor.Candidates.Remove(unique.Key);
-
-                // eliminate from others
-                foreach (KeyValuePair<int, HashSet<string>> pair in processor.Candidates)
-                {
-                    pair.Value.Remove(instruction);
-                }
-            }
-
-            /*foreach (KeyValuePair<int, string> candidate in map)
-            {
-                Debug.WriteLine($"{candidate.Key}: {candidate.Value}");
-            }*/
-
-            var current = transitions.Last().After;
-
-            for (int i = 3146; i < input.Length; i++)
-            {
-                var instruction = input[i].Split(' ').Select(int.Parse).ToArray();
-                current = processor.Execute(current, instruction, map);
-            }
-
-            return part1;
-        }
-
-        public int Part2(string[] input)
-        {
-            foreach (string line in input)
-            {
-                throw new NotImplementedException("Part 2 not implemented");
-            }
-
-            return 0;
+            return transitions;
         }
     }
 
+    /// <summary>
+    /// Emulates a processor with a limited instruction set
+    /// </summary>
     public class Processor
     {
-        private readonly ICollection<string> simple = new[] { "ad", "mu", "ba", "bo" };
-
-        private readonly string[] instructions =
+        private readonly Dictionary<string, Func<int[], int, int, int>> instructions = new Dictionary<string, Func<int[], int, int, int>>
         {
-            "addr",
-            "addi",
-            "mulr",
-            "muli",
-            "banr",
-            "bani",
-            "borr",
-            "bori",
-            "setr",
-            "seti",
-            "gtir",
-            "gtri",
-            "gtrr",
-            "eqir",
-            "eqri",
-            "eqrr"
+            ["addr"] = (input, a, b) => input[a] + input[b],
+            ["addi"] = (input, a, b) => input[a] + b,
+            ["mulr"] = (input, a, b) => input[a] * input[b],
+            ["muli"] = (input, a, b) => input[a] * b,
+            ["banr"] = (input, a, b) => input[a] & input[b],
+            ["bani"] = (input, a, b) => input[a] & b,
+            ["borr"] = (input, a, b) => input[a] | input[b],
+            ["bori"] = (input, a, b) => input[a] | b,
+            ["setr"] = (input, a, _) => input[a],
+            ["seti"] = (input, a, _) => a,
+            ["gtir"] = (input, a, b) => a > input[b] ? 1 : 0,
+            ["gtri"] = (input, a, b) => input[a] > b ? 1 : 0,
+            ["gtrr"] = (input, a, b) => input[a] > input[b] ? 1 : 0,
+            ["eqir"] = (input, a, b) => a == input[b] ? 1 : 0,
+            ["eqri"] = (input, a, b) => input[a] == b ? 1 : 0,
+            ["eqrr"] = (input, a, b) => input[a] == input[b] ? 1 : 0
         };
 
-        public Dictionary<int, HashSet<string>> Candidates { get; } = new Dictionary<int, HashSet<string>>
-        {
-            [0] = new HashSet<string>(),
-            [1] = new HashSet<string>(),
-            [2] = new HashSet<string>(),
-            [3] = new HashSet<string>(),
-            [4] = new HashSet<string>(),
-            [5] = new HashSet<string>(),
-            [6] = new HashSet<string>(),
-            [7] = new HashSet<string>(),
-            [8] = new HashSet<string>(),
-            [9] = new HashSet<string>(),
-            [10] = new HashSet<string>(),
-            [11] = new HashSet<string>(),
-            [12] = new HashSet<string>(),
-            [13] = new HashSet<string>(),
-            [14] = new HashSet<string>(),
-            [15] = new HashSet<string>()
-        };
+        private readonly Dictionary<int, HashSet<string>> candidates = new Dictionary<int, HashSet<string>>(16);
+        private readonly Dictionary<int, string> instructionMap = new Dictionary<int, string>(16);
 
-        public int Train(Transition transition)
+        /// <summary>
+        /// Train the processor with the given training set to calculate the opcode to instruction map
+        /// </summary>
+        /// <param name="trainingSet">Training set</param>
+        /// <returns>Number of items in the training set that map to 3 or more possible instructions</returns>
+        public int Train(ICollection<Transition> trainingSet)
         {
-            var matches = new List<string>();
-            
-            foreach (var instruction in this.instructions)
+            int manyMatches = 0;
+
+            foreach (Transition transition in trainingSet)
             {
-                int[] output = this.Execute(transition.Before, transition.Operation, instruction);
+                int matches = 0;
 
-                // check for match
-                bool match = true;
-
-                for (int i = 0; i < transition.After.Length; i++)
+                foreach (var instruction in this.instructions)
                 {
-                    if (output[i] != transition.After[i])
+                    int[] output = this.Execute(transition.Before, transition.Operation, instruction.Key);
+
+                    // check for match
+                    bool match = true;
+
+                    for (int i = 0; i < transition.After.Length; i++)
                     {
-                        match = false;
-                        break;
+                        if (output[i] != transition.After[i])
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+
+                    if (match)
+                    {
+                        matches++;
+
+                        // mark this opcode as a potential mapping for this instruction
+                        this.candidates.GetOrCreate(transition.Operation[0]).Add(instruction.Key);
                     }
                 }
-                
-                if (match)
+
+                if (matches >= 3)
                 {
-                    matches.Add(instruction);
-                    this.Candidates[transition.Operation[0]].Add(instruction);
+                    manyMatches++;
                 }
             }
 
-            return matches.Count;
+            // now that training has finished, calculate the opcode to instruction map
+            this.CalculateInstructionMap();
+
+            return manyMatches;
         }
 
-        public int[] Execute(int[] input, int[] operation, Dictionary<int, string> instructionMap)
+        /// <summary>
+        /// Execute the given operation against the given input
+        /// </summary>
+        /// <param name="input">Input state</param>
+        /// <param name="operation">Operation</param>
+        /// <returns>Output of the operation</returns>
+        public int[] Execute(int[] input, int[] operation)
         {
-            string instruction = instructionMap[operation[0]];
+            string instruction = this.instructionMap[operation[0]];
             return this.Execute(input, operation, instruction);
         }
 
+        /// <summary>
+        /// Execute the given instruction against the given input with the given operation arguments
+        /// </summary>
+        /// <param name="input">Input state</param>
+        /// <param name="operation">Operation arguments</param>
+        /// <param name="instruction">Instruction name</param>
+        /// <returns>Output of the instruction</returns>
         private int[] Execute(int[] input, int[] operation, string instruction)
         {
-            int result;
-            string opcode = instruction.Substring(0, 2);
-
-            // set a and b to literals
+            // extract values from operation
             int a = operation[1];
             int b = operation[2];
             int c = operation[3];
 
-            // check if A and B should refer to registers
-            if (this.simple.Contains(opcode) || // A is always a register for add/mul/ban/bor
-                (opcode == "se" && instruction[3] == 'r') || // set uses the 4th character, not the third
-                (opcode != "se" && instruction[2] != 'i')) // gt and eq use 3rd character
-            {
-                // look up the register
-                a = input[a];
-            }
-
-            if (instruction[3] != 'i')
-            {
-                // look up the register
-                b = input[b];
-            }
-
             // perform the operation
-            switch (opcode)
-            {
-                case "ad":
-                    result = a + b;
-                    break;
-                case "mu":
-                    result = a * b;
-                    break;
-                case "ba":
-                    result = a & b;
-                    break;
-                case "bo":
-                    result = a | b;
-                    break;
-                case "se":
-                    b = -1;
-                    result = a;
-                    break;
-                case "gt":
-                    result = a > b ? 1 : 0;
-                    break;
-                case "eq":
-                    result = a == b ? 1 : 0;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            int result = this.instructions[instruction](input, a, b);
 
             // set C register
             int[] output = new int[input.Length];
             input.CopyTo(output, 0);
             output[c] = result;
+
             return output;
+        }
+
+        /// <summary>
+        /// Calculates the map of integer opcodes to instruction names using process of elimination from the training run
+        /// </summary>
+        private void CalculateInstructionMap()
+        {
+            // boil down the candidates list via process of elimination
+            while (this.candidates.Any())
+            {
+                // find the opcode which can only match one possible instruction
+                var unique = this.candidates.First(c => c.Value.Count == 1);
+                string instruction = unique.Value.First();
+                this.instructionMap[unique.Key] = instruction;
+                this.candidates.Remove(unique.Key);
+
+                // eliminate from others
+                foreach (KeyValuePair<int, HashSet<string>> pair in this.candidates)
+                {
+                    pair.Value.Remove(instruction);
+                }
+            }
         }
     }
 
@@ -242,6 +207,20 @@ namespace AdventOfCode
             this.Before = input[0].Substring(9, 10).Split(',').Select(int.Parse).ToArray();
             this.Operation = input[1].Split(' ').Select(int.Parse).ToArray();
             this.After = input[2].Substring(9, 10).Split(',').Select(int.Parse).ToArray();
+        }
+    }
+
+    public static class DictionaryExtensions
+    {
+        public static TValue GetOrCreate<TKey, TValue>(this IDictionary<TKey, TValue> @this, TKey key) where TValue : new()
+        {
+            if (!@this.TryGetValue(key, out TValue value))
+            {
+                value = new TValue();
+                @this.Add(key, value);
+            }
+
+            return value;
         }
     }
 }

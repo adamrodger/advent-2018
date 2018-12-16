@@ -22,44 +22,13 @@ namespace AdventOfCode.Tests
             return input;
         }
 
-        private static string[] GetSampleInput()
-        {
-            return new string[]
-            {
-                "Before: [3, 2, 1, 1]",
-                "9 2 1 2",
-                "After:  [3, 2, 2, 1]",
-                ""
-            };
-        }
-
-        [Fact]
-        public void Part1_SampleInput_ProducesCorrectResponse()
-        {
-            var expected = -1;
-
-            var result = solver.Part1(GetSampleInput());
-
-            Assert.Equal(expected, result);
-        }
-
         [Fact]
         public void Part1_RealInput_ProducesCorrectResponse()
         {
             var expected = 605;
 
-            var result = solver.Part1(GetRealInput());
+            (var result, _) = solver.Solve(GetRealInput());
             output.WriteLine($"Day 16 - Part 1 - {result}");
-
-            Assert.Equal(expected, result);
-        }
-
-        [Fact]
-        public void Part2_SampleInput_ProducesCorrectResponse()
-        {
-            var expected = -1;
-
-            var result = solver.Part2(GetSampleInput());
 
             Assert.Equal(expected, result);
         }
@@ -67,9 +36,9 @@ namespace AdventOfCode.Tests
         [Fact]
         public void Part2_RealInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            var expected = 653;
 
-            var result = solver.Part2(GetRealInput());
+            (_, var result) = solver.Solve(GetRealInput());
             output.WriteLine($"Day 16 - Part 2 - {result}");
 
             Assert.Equal(expected, result);
