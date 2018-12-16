@@ -2,11 +2,9 @@ using System;
 
 namespace AdventOfCode
 {
-    using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using MoreLinq;
 
     /// <summary>
     /// Solver for Day 16
@@ -15,11 +13,6 @@ namespace AdventOfCode
     {
         public int Part1(string[] input)
         {
-            /*var instructions = input.Batch(4)
-                                    .TakeUntil(i => i.ElementAt(1).Trim() == string.Empty) // start of example program
-                                    .Select(i => new Transition(i.ToArray()))
-                                    .ToArray();*/
-
             List<Transition> transitions = new List<Transition>();
 
             for (int i = 0; i < input.Length; i += 4)
@@ -35,9 +28,46 @@ namespace AdventOfCode
                 transitions.Add(transition);
             }
 
-            var operations = new Operations();
+            var processor = new Processor();
 
-            return transitions.Count(transition => operations.MatchingOperations(transition) >= 3);
+            int part1 = transitions.Count(transition => processor.Train(transition) >= 3);
+
+            var map = new Dictionary<int, string>();
+
+            /*foreach (KeyValuePair<int, HashSet<string>> candidate in processor.Candidates)
+            {
+                Debug.WriteLine($"{candidate.Key}: {string.Join(", ", candidate.Value)}");
+            }*/
+
+            // boil down the candidates list
+            while (processor.Candidates.Any())
+            {
+                var unique = processor.Candidates.First(c => c.Value.Count == 1);
+                string instruction = unique.Value.First();
+                map[unique.Key] = instruction;
+                processor.Candidates.Remove(unique.Key);
+
+                // eliminate from others
+                foreach (KeyValuePair<int, HashSet<string>> pair in processor.Candidates)
+                {
+                    pair.Value.Remove(instruction);
+                }
+            }
+
+            /*foreach (KeyValuePair<int, string> candidate in map)
+            {
+                Debug.WriteLine($"{candidate.Key}: {candidate.Value}");
+            }*/
+
+            var current = transitions.Last().After;
+
+            for (int i = 3146; i < input.Length; i++)
+            {
+                var instruction = input[i].Split(' ').Select(int.Parse).ToArray();
+                current = processor.Execute(current, instruction, map);
+            }
+
+            return part1;
         }
 
         public int Part2(string[] input)
@@ -51,32 +81,9 @@ namespace AdventOfCode
         }
     }
 
-    public class Operations
+    public class Processor
     {
-        /*private Dictionary<string, Func<int[], int[], int[]>> instructions;
-
-        public Operations()
-        {
-            this.instructions = new Dictionary<string, Func<int[], int[], int[]>>
-            {
-                ["addr"] = this.AddR,
-                ["addi"] = this.AddI,
-                ["mulr"] = this.MulR,
-                ["muli"] = this.MulI,
-                ["banr"] = this.BanR,
-                ["bani"] = this.BanI,
-                ["borr"] = this.BorR,
-                ["bori"] = this.BorI,
-                ["setr"] = this.SetR,
-                ["seti"] = this.SetI,
-                ["gtir"] = this.GtIR,
-                ["gtri"] = this.GtRI,
-                ["gtrr"] = this.GtRR,
-                ["eqir"] = this.EqIR,
-                ["eqri"] = this.EqRI,
-                ["eqrr"] = this.EqRR
-            };
-        }*/
+        private readonly ICollection<string> simple = new[] { "ad", "mu", "ba", "bo" };
 
         private readonly string[] instructions =
         {
@@ -98,75 +105,33 @@ namespace AdventOfCode
             "eqrr"
         };
 
-        public int MatchingOperations(Transition transition)
+        public Dictionary<int, HashSet<string>> Candidates { get; } = new Dictionary<int, HashSet<string>>
         {
-            var simple = new[] { "ad", "mu", "ba", "bo" };
+            [0] = new HashSet<string>(),
+            [1] = new HashSet<string>(),
+            [2] = new HashSet<string>(),
+            [3] = new HashSet<string>(),
+            [4] = new HashSet<string>(),
+            [5] = new HashSet<string>(),
+            [6] = new HashSet<string>(),
+            [7] = new HashSet<string>(),
+            [8] = new HashSet<string>(),
+            [9] = new HashSet<string>(),
+            [10] = new HashSet<string>(),
+            [11] = new HashSet<string>(),
+            [12] = new HashSet<string>(),
+            [13] = new HashSet<string>(),
+            [14] = new HashSet<string>(),
+            [15] = new HashSet<string>()
+        };
 
-            int matches = 0;
-
-            Debug.WriteLine(string.Join(", ", transition.After));
-            Debug.WriteLine(string.Empty);
-
+        public int Train(Transition transition)
+        {
+            var matches = new List<string>();
+            
             foreach (var instruction in this.instructions)
             {
-                int result;
-                string opcode = instruction.Substring(0, 2);
-
-                // set a and b to literals
-                int a = transition.Operation[1];
-                int b = transition.Operation[2];
-                int c = transition.Operation[3];
-
-                // check if A and B should refer to registers
-                if (simple.Contains(opcode) || // A is always a register for add/mul/ban/bor
-                    (opcode == "se" && instruction[3] == 'r') || // set uses the 4th character, not the third
-                    (opcode != "se" && instruction[2] != 'i')) // gt and eq use 3rd character
-                {
-                    // look up the register
-                    a = transition.Before[a];
-                }
-
-                if (instruction[3] != 'i')
-                {
-                    // look up the register
-                    b = transition.Before[b];
-                }
-                
-                // perform the operation
-                switch (opcode)
-                {
-                    case "ad":
-                        result = a + b;
-                        break;
-                    case "mu":
-                        result = a * b;
-                        break;
-                    case "ba":
-                        result = a & b;
-                        break;
-                    case "bo":
-                        result = a | b;
-                        break;
-                    case "se":
-                        b = -1;
-                        result = a;
-                        break;
-                    case "gt":
-                        result = a > b ? 1 : 0;
-                        break;
-                    case "eq":
-                        result = a == b ? 1 : 0;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-
-                Debug.WriteLine($"{opcode} {a} {b} = {result}");
-
-                // set C register
-                int[] output = new int[transition.Before.Length];
-                transition.Before.CopyTo(output, 0);
-                output[c] = result;
+                int[] output = this.Execute(transition.Before, transition.Operation, instruction);
 
                 // check for match
                 bool match = true;
@@ -179,177 +144,83 @@ namespace AdventOfCode
                         break;
                     }
                 }
-
-                Debug.WriteLine(instruction + " = " + string.Join(", ", output) + " " + (match ? "MATCH" : ""));
-
+                
                 if (match)
                 {
-                    matches++;
+                    matches.Add(instruction);
+                    this.Candidates[transition.Operation[0]].Add(instruction);
                 }
             }
 
-            return matches;
+            return matches.Count;
         }
 
-        /*private int[] AddR(int[] instruction, int[] input)
+        public int[] Execute(int[] input, int[] operation, Dictionary<int, string> instructionMap)
         {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]] + input[instruction[2]];
-
-            return output;
+            string instruction = instructionMap[operation[0]];
+            return this.Execute(input, operation, instruction);
         }
 
-        private int[] AddI(int[] instruction, int[] input)
+        private int[] Execute(int[] input, int[] operation, string instruction)
         {
+            int result;
+            string opcode = instruction.Substring(0, 2);
+
+            // set a and b to literals
+            int a = operation[1];
+            int b = operation[2];
+            int c = operation[3];
+
+            // check if A and B should refer to registers
+            if (this.simple.Contains(opcode) || // A is always a register for add/mul/ban/bor
+                (opcode == "se" && instruction[3] == 'r') || // set uses the 4th character, not the third
+                (opcode != "se" && instruction[2] != 'i')) // gt and eq use 3rd character
+            {
+                // look up the register
+                a = input[a];
+            }
+
+            if (instruction[3] != 'i')
+            {
+                // look up the register
+                b = input[b];
+            }
+
+            // perform the operation
+            switch (opcode)
+            {
+                case "ad":
+                    result = a + b;
+                    break;
+                case "mu":
+                    result = a * b;
+                    break;
+                case "ba":
+                    result = a & b;
+                    break;
+                case "bo":
+                    result = a | b;
+                    break;
+                case "se":
+                    b = -1;
+                    result = a;
+                    break;
+                case "gt":
+                    result = a > b ? 1 : 0;
+                    break;
+                case "eq":
+                    result = a == b ? 1 : 0;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            // set C register
             int[] output = new int[input.Length];
             input.CopyTo(output, 0);
-
-            output[input[instruction[3]]] = input[instruction[1]] + instruction[2];
-
+            output[c] = result;
             return output;
         }
-
-        private int[] MulR(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]] * input[instruction[2]];
-
-            return output;
-        }
-
-        private int[] MulI(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[input[instruction[3]]] = input[instruction[1]] * instruction[2];
-
-            return output;
-        }
-
-        private int[] BanR(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]] & input[instruction[2]];
-
-            return output;
-        }
-
-        private int[] BanI(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[input[instruction[3]]] = input[instruction[1]] & instruction[2];
-
-            return output;
-        }
-
-        private int[] BorR(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]] | input[instruction[2]];
-
-            return output;
-        }
-
-        private int[] BorI(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[input[instruction[3]]] = input[instruction[1]] | instruction[2];
-
-            return output;
-        }
-
-        private int[] SetR(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]];
-
-            return output;
-        }
-
-        private int[] SetI(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[input[instruction[3]]] = instruction[1];
-
-            return output;
-        }
-
-        private int[] GtIR(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = instruction[1] > input[instruction[2]] ? 1 : 0;
-
-            return output;
-        }
-
-        private int[] GtRI(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]] > instruction[2] ? 1 : 0;
-
-            return output;
-        }
-
-        private int[] GtRR(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]] > input[instruction[2]] ? 1 : 0;
-
-            return output;
-        }
-
-        private int[] EqIR(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = instruction[1] == input[instruction[2]] ? 1 : 0;
-
-            return output;
-        }
-
-        private int[] EqRI(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]] == instruction[2] ? 1 : 0;
-
-            return output;
-        }
-
-        private int[] EqRR(int[] instruction, int[] input)
-        {
-            int[] output = new int[input.Length];
-            input.CopyTo(output, 0);
-
-            output[instruction[3]] = input[instruction[1]] == input[instruction[2]] ? 1 : 0;
-
-            return output;
-        }*/
     }
 
     public class Transition
