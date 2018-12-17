@@ -24,7 +24,7 @@ namespace AdventOfCode.Tests
 
         private static string[] GetSampleInput()
         {
-            return new string[]
+            /*return new string[]
             {
                 "x=495, y=2..7",
                 "y=7, x=495..501",
@@ -34,13 +34,23 @@ namespace AdventOfCode.Tests
                 "x=498, y=10..13",
                 "x=504, y=10..13",
                 "y=13, x=498..504"
+            };*/
+
+            return new string[] // small bucket fully inside a big bucket
+            {
+                "x=495, y=1..10",
+                "x=505, y=2..10",
+                "y=10, x=495..505",
+                "x=498, y=4..7",
+                "x=502, y=4..7",
+                "y=7, x=498..502"
             };
         }
 
         [Fact]
         public void Solve_SampleInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            var expected = 57;
 
             var result = solver.Solve(GetSampleInput());
 
