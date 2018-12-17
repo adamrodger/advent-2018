@@ -146,36 +146,14 @@ namespace AdventOfCode
 
         private static (char[,] grid, int origin) Parse(string[] input)
         {
-            var walls = new List<(bool vertical, int same, int start, int end)>(input.Length);
+            var verticals = input.Where(i => i[0] == 'x').Select(i => i.Numbers()).ToArray();
+            var horizontals = input.Where(i => i[0] == 'y').Select(i => i.Numbers()).ToArray();
 
-            foreach (string line in input)
-            {
-                /*
-                 * x=513, y=877..886
-                 * y=334, x=496..500
-                 */
+            var minX = Math.Min(verticals.Min(v => v[0]), horizontals.Min(h => h[1])) - 1; // room to flow off the side
+            var maxX = Math.Max(verticals.Max(v => v[0]), horizontals.Max(h => h[2])) + 1;
 
-                string[] parts = line.Split(',').Select(t => t.Trim()).ToArray();
-                string[] range = parts[1].Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-
-                int[] nums =
-                {
-                    int.Parse(parts[0].Substring(2)),
-                    int.Parse(range[0].Substring(2)),
-                    int.Parse(range[1])
-                };
-
-                walls.Add((line[0] == 'x', nums[0], nums[1], nums[2]));
-            }
-
-            var verticals = walls.Where(w => w.vertical).ToArray();
-            var horizontals = walls.Where(w => !w.vertical).ToArray();
-
-            var minX = Math.Min(verticals.Min(v => v.same), horizontals.Min(h => h.start)) - 1; // room to flow off the side
-            var maxX = Math.Max(verticals.Max(v => v.same), horizontals.Max(h => h.end)) + 1;
-
-            var minY = Math.Min(horizontals.Min(v => v.same), verticals.Min(h => h.start));
-            var maxY = Math.Max(horizontals.Max(v => v.same), verticals.Max(h => h.end));
+            var minY = Math.Min(horizontals.Min(v => v[0]), verticals.Min(h => h[1]));
+            var maxY = Math.Max(horizontals.Max(v => v[0]), verticals.Max(h => h[2]));
 
             var xSize = maxX - minX + 1;
             var ySize = maxY - minY + 1;
@@ -193,21 +171,19 @@ namespace AdventOfCode
             int origin = 500 - minX;
             grid[0, origin] = '+';
 
-            foreach ((bool vertical, int same, int start, int end) wall in walls)
+            foreach (int[] wall in verticals)
             {
-                if (wall.vertical)
+                for (int y = wall[1] - minY; y <= wall[2] - minY; y++)
                 {
-                    for (int y = wall.start - minY; y <= wall.end - minY; y++)
-                    {
-                        grid[y, wall.same - minX] = '#';
-                    }
+                    grid[y, wall[0] - minX] = '#';
                 }
-                else
+            }
+
+            foreach (int[] wall in horizontals)
+            {
+                for (int x = wall[1] - minX; x <= wall[2] - minX; x++)
                 {
-                    for (int x = wall.start - minX; x <= wall.end - minX; x++)
-                    {
-                        grid[wall.same - minY, x] = '#';
-                    }
+                    grid[wall[0] - minY, x] = '#';
                 }
             }
 
