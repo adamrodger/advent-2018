@@ -4,6 +4,7 @@ namespace AdventOfCode
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using System.Text;
     using MoreLinq;
 
     /// <summary>
@@ -78,7 +79,9 @@ namespace AdventOfCode
                 return;
             }
 
-            Debug.WriteLine($"{messagePrefix} round {round}:");
+            var builder = new StringBuilder();
+
+            builder.AppendLine($"{messagePrefix} round {round}:");
 
             // print end of round
             for (int y = 0; y < input.Length; y++)
@@ -91,14 +94,15 @@ namespace AdventOfCode
                 {
                     var player = playersOnRow.FirstOrDefault(p => p.Location.x == x);
 
-                    Debug.Write(player?.Type.ToString() ?? input[y][x].ToString());
+                    builder.Append(player?.Type.ToString() ?? input[y][x].ToString());
                 }
 
-                Debug.Write(" ");
-                Debug.WriteLine(string.Join<Player>(", ", playersOnRow));
+                builder.Append(" ");
+                builder.AppendLine(string.Join<Player>(", ", playersOnRow));
             }
 
-            Debug.WriteLine("\n");
+            builder.AppendLine();
+            Debug.WriteLine(builder.ToString());
         }
 
         /// <summary>

@@ -14,30 +14,13 @@ namespace AdventOfCode
         public (int, int) Solve(string[] input)
         {
             (var grid, var origin) = Parse(input);
-
-            //PrintGrid(grid);
-
+            
             this.Search(origin, 0, grid);
 
-            PrintGrid(grid);
+            grid.Print();
 
-            int still = 0;
-            int flowing = 0;
-
-            for (int y = 0; y < grid.GetLength(0); y++)
-            {
-                for (int x = 0; x < grid.GetLength(1); x++)
-                {
-                    if (grid[y, x] == '~')
-                    {
-                        still++;
-                    }
-                    else if (grid[y, x] == '|')
-                    {
-                        flowing++;
-                    }
-                }
-            }
+            int still = grid.Search(cell => cell == '~').Count();
+            int flowing = grid.Search(cell => cell == '|').Count();
 
             return (still + flowing, still);
         }
@@ -83,37 +66,15 @@ namespace AdventOfCode
             }
 
             // reached a dead end, fill this entire row with settled water if we're inside a container
-            bool settle = IsBetweenWalls(x, y, grid);
-
-            if (settle)
+            if (IsBetweenWalls(x, y, grid))
             {
-                // fill left
-                for (int i = x; i > 0; i--)
-                {
-                    if (grid[y, i] == '#')
-                    {
-                        break;
-                    }
-
-                    grid[y, i] = '~';
-                }
-
-                // fill left
-                for (int i = x; i < grid.GetLength(1); i++)
-                {
-                    if (grid[y, i] == '#')
-                    {
-                        break;
-                    }
-
-                    grid[y, i] = '~';
-                }
+                FillBasin(x, y, grid);
             }
 
-            if (grid.GetLength(0) < 20)
+            if (grid.GetLength(0) < 20) // only for sample input
             {
                 Debug.WriteLine(string.Empty);
-                PrintGrid(grid);
+                grid.Print();
             }
         }
 
@@ -129,8 +90,7 @@ namespace AdventOfCode
                 if (grid[y + 1, i] != '#' && grid[y + 1, i] != '~')
                 {
                     // fell off the edge
-                    wallLeft = false;
-                    break;
+                    return false;
                 }
 
                 if (grid[y, i] == '~' || grid[y, i] == '#')
@@ -146,8 +106,7 @@ namespace AdventOfCode
                 if (grid[y + 1, i] != '#' && grid[y + 1, i] != '~')
                 {
                     // fell off the edge
-                    wallRight = false;
-                    break;
+                    return false;
                 }
 
                 if (grid[y, i] == '~' || grid[y, i] == '#')
@@ -160,27 +119,29 @@ namespace AdventOfCode
             return wallLeft && wallRight;
         }
 
-        private static void PrintGrid(char[,] grid)
+        private static void FillBasin(int x, int y, char[,] grid)
         {
-            if (!Debugger.IsAttached)
+            // fill left
+            for (int i = x; i > 0; i--)
             {
-                return;
-            }
-
-            var builder = new StringBuilder(grid.GetLength(0) * grid.GetLength(1));
-            builder.AppendLine();
-
-            for (int y = 0; y < grid.GetLength(0); y++)
-            {
-                for (int x = 0; x < grid.GetLength(1); x++)
+                if (grid[y, i] == '#')
                 {
-                    builder.Append(grid[y, x]);
+                    break;
                 }
 
-                builder.AppendLine();
+                grid[y, i] = '~';
             }
 
-            Debug.WriteLine(builder.ToString());
+            // fill right
+            for (int i = x; i < grid.GetLength(1); i++)
+            {
+                if (grid[y, i] == '#')
+                {
+                    break;
+                }
+
+                grid[y, i] = '~';
+            }
         }
 
         private static (char[,] grid, int origin) Parse(string[] input)

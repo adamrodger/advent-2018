@@ -16,25 +16,20 @@ namespace AdventOfCode
             char[,] tracks = new char[input[0].Length, input.Length];
 
             // initial parse
-            for (int y = 0; y < input.Length; y++)
+            input.ForEachChar((x, y, tile) =>
             {
-                for (int x = 0; x < input[y].Length; x++)
+                if (tile != '<' && tile != '>' && tile != '^' && tile != 'v')
                 {
-                    char tile = input[y][x];
-
-                    if (tile != '<' && tile != '>' && tile != '^' && tile != 'v')
-                    {
-                        tracks[x, y] = tile;
-                        continue;
-                    }
-
-                    // parse out the cart
-                    var cart = new Cart(nextId++, tile, x, y);
-                    carts[cart.Id] = cart;
-
-                    tracks[x, y] = cart.Direction == Direction.Left || cart.Direction == Direction.Right ? '-' : '|';
+                    tracks[x, y] = tile;
+                    return;
                 }
-            }
+
+                // parse out the cart
+                var cart = new Cart(nextId++, tile, x, y);
+                carts[cart.Id] = cart;
+
+                tracks[x, y] = cart.Direction == Direction.Left || cart.Direction == Direction.Right ? '-' : '|';
+            });
 
             Cart firstCollision = null;
 
