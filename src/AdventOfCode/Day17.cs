@@ -11,7 +11,7 @@ namespace AdventOfCode
     /// </summary>
     public class Day17
     {
-        public int Solve(string[] input)
+        public (int, int) Solve(string[] input)
         {
             (var grid, var origin) = Parse(input);
 
@@ -39,7 +39,7 @@ namespace AdventOfCode
                 }
             }
 
-            return still + flowing;
+            return (still + flowing, still);
         }
 
         /// <summary>
@@ -63,31 +63,58 @@ namespace AdventOfCode
             if (grid[y + 1, x] == '.')
             {
                 this.Search(x, y + 1, grid);
+            }
 
-                if (grid[y + 1, x] == '|')
+            bool onShelf = grid[y + 1, x] == '#' || grid[y + 1, x] == '~';
+
+            if (onShelf)
+            {
+                // move left
+                if (grid[y, x - 1] == '.')
                 {
-                    // reversing back out of an infinite drop
-                    return;
+                    this.Search(x - 1, y, grid);
+                }
+
+                // move right
+                if (grid[y, x + 1] == '.')
+                {
+                    this.Search(x + 1, y, grid);
                 }
             }
 
-            // move left
-            if (grid[y, x - 1] == '.')
+            // reached a dead end, fill this entire row with settled water if we're inside a container
+            bool settle = IsBetweenWalls(x, y, grid);
+
+            if (settle)
             {
-                this.Search(x - 1, y, grid);
+                // fill left
+                for (int i = x; i > 0; i--)
+                {
+                    if (grid[y, i] == '#')
+                    {
+                        break;
+                    }
+
+                    grid[y, i] = '~';
+                }
+
+                // fill left
+                for (int i = x; i < grid.GetLength(1); i++)
+                {
+                    if (grid[y, i] == '#')
+                    {
+                        break;
+                    }
+
+                    grid[y, i] = '~';
+                }
             }
 
-            // move right
-            if (grid[y, x + 1] == '.')
+            if (grid.GetLength(0) < 20)
             {
-                this.Search(x + 1, y, grid);
+                Debug.WriteLine(string.Empty);
+                PrintGrid(grid);
             }
-
-            // reached a dead end, rewind back out of this cell deciding whether to leave water behind or not
-            grid[y, x] = IsBetweenWalls(x, y, grid) ? '~' : '|';
-
-            Debug.WriteLine(string.Empty);
-            PrintGrid(grid);
         }
 
         private static bool IsBetweenWalls(int x, int y, char[,] grid)
