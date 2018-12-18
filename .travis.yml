@@ -1,8 +1,0 @@
-language: csharp
-mono: none
-dotnet: 2.1
-dist: xenial
-script:
- - dotnet build
- - dotnet test --no-build tests/AdventOfCode.Tests/AdventOfCode.Tests.csproj
- 
