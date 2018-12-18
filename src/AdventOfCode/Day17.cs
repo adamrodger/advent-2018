@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace AdventOfCode
 {
@@ -14,7 +12,7 @@ namespace AdventOfCode
         public (int, int) Solve(string[] input)
         {
             (var grid, var origin) = Parse(input);
-            
+
             this.Search(origin, 0, grid);
 
             grid.Print();

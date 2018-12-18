@@ -28,6 +28,17 @@
             }
         }
 
+        public static void ForEach<T>(this T[,] grid, Action<int, int, T> action)
+        {
+            for (int y = 0; y < grid.GetLength(0); y++)
+            {
+                for (int x = 0; x < grid.GetLength(1); x++)
+                {
+                    action(x, y, grid[y, x]);
+                }
+            }
+        }
+
         public static void ForEachChar(this string[] input, Action<int, int, char> cellAction)
         {
             for (int y = 0; y < input.Length; y++)
@@ -64,6 +75,7 @@
 
             var builder = new StringBuilder(grid.GetLength(0) * (grid.GetLength(1) + Environment.NewLine.Length));
             grid.ForEach(cell => builder.Append(cell), () => builder.AppendLine());
+            builder.AppendLine();
 
             Debug.Write(builder.ToString());
         }
