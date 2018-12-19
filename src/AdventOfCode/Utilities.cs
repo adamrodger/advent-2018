@@ -79,5 +79,16 @@
 
             Debug.Write(builder.ToString());
         }
+
+        public static TValue GetOrCreate<TKey, TValue>(this IDictionary<TKey, TValue> @this, TKey key) where TValue : new()
+        {
+            if (!@this.TryGetValue(key, out TValue value))
+            {
+                value = new TValue();
+                @this.Add(key, value);
+            }
+
+            return value;
+        }
     }
 }
