@@ -22,22 +22,32 @@ namespace AdventOfCode.Tests
             return input;
         }
 
-        [Theory]
-        [InlineData("^WNE$", 3)]
-        [InlineData("^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$", 18)]
-        public void Part1_SampleInput_ProducesCorrectResponse(string input, int expected)
+        [Fact]
+        public void Part1_NoBranches_ProducesCorrectResponse()
         {
-            var result = solver.Part1(input);
+            var expected = 3;
+
+            var (result, _) = solver.Solve("^WNE$");
 
             Assert.Equal(expected, result);
         }
 
         [Fact]
-        public void Part1_NestedBranches_ProducesCorrectResponse()
+        public void Part1_SimpleBranching_ProducesCorrectResponse()
+        {
+            var expected = 18;
+
+            var (result, _) = solver.Solve("^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$");
+
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void Part1_NestedBranching_ProducesCorrectResponse()
         {
             var expected = 10;
 
-            var result = solver.Part1("^ENWWW(NEEE|SSE(EE|N))$");
+            var (result, _) = solver.Solve("^ENWWW(NEEE|SSE(EE|N))$");
 
             Assert.Equal(expected, result);
         }
@@ -45,11 +55,9 @@ namespace AdventOfCode.Tests
         [Fact]
         public void Part1_RealInput_ProducesCorrectResponse()
         {
-            // guessed 1604 -- too low
-            // guessed 1605 -- too low
-            var expected = -1;
+            var expected = 3545;
 
-            var result = solver.Part1(GetRealInput());
+            var (result, _) = solver.Solve(GetRealInput());
             output.WriteLine($"Day 20 - Part 1 - {result}");
 
             Assert.Equal(expected, result);
@@ -58,9 +66,9 @@ namespace AdventOfCode.Tests
         [Fact]
         public void Part2_RealInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            var expected = 7838;
 
-            var result = solver.Part2(GetRealInput());
+            var (_, result) = solver.Solve(GetRealInput());
             output.WriteLine($"Day 20 - Part 2 - {result}");
 
             Assert.Equal(expected, result);

@@ -16,81 +16,121 @@ namespace AdventOfCode
             ['W'] = (-1, 0)
         };
 
-        public int Part1(string input)
+        /// <summary>
+        /// Solve for the given input
+        /// </summary>
+        /// <param name="input">Input</param>
+        /// <returns>
+        /// Part 1 - Shortest path to the furthest away point
+        /// Part 2 - Number of paths >= 1000 steps long
+        /// </returns>
+        public (int part1, int part2) Solve(string input)
         {
             (int x, int y) location = (0, 0);
 
-            var paths = new Dictionary<(int x, int y), HashSet<(int x, int y)>>
+            // collection of locations and the doors out of that location
+            var rooms = new Dictionary<(int x, int y), HashSet<(int x, int y)>>
             {
                 [location] = new HashSet<(int x, int y)>()
             };
 
+            // keep track of where we've visited so we don't re-visit rooms
             var seen = new HashSet<(int x, int y)> { location };
 
-            this.Search(input, 1, location, seen, 0, paths);
+            this.Search(input, location, seen, rooms);
 
-            return paths.Max(kvp => kvp.Value.Count);
+            // we've now got a big list of every room and the doors out of that room - follow every possible path in a BFS (like day 15)
+            var lengths = new Dictionary<(int x, int y), int> { [(0, 0)] = 0 };
+            var queue = new Queue<(int x, int y)>();
+            queue.Enqueue((0, 0));
+
+            while (queue.Any())
+            {
+                var previous = queue.Dequeue();
+                var adjacent = rooms[previous].Where(door => !lengths.ContainsKey(door)); // don't revisit
+
+                // walk outwards through every door and queue it to be checked for more walking outwards
+                foreach (var next in adjacent)
+                {
+                    lengths[next] = lengths[previous] + 1;
+                    queue.Enqueue(next);
+                }
+            }
+
+            return (lengths.Max(kvp => kvp.Value), lengths.Count(kvp => kvp.Value >= 1000));
         }
 
-        public void Search(string input, int index, (int x, int y) location, HashSet<(int x, int y)> seen, int depth, Dictionary<(int x, int y), HashSet<(int x, int y)>> paths)
+        /// <summary>
+        /// For the given input, follow the path from the given index and location, noting which doors can exit from that location
+        /// </summary>
+        /// <param name="input">Input string</param>
+        /// <param name="location">Current location</param>
+        /// <param name="seen">Locations that have already been visited</param>
+        /// <param name="rooms">Mapping of location to destinations from that location to populate</param>
+        public void Search(string input, (int x, int y) location, HashSet<(int x, int y)> seen, Dictionary<(int x, int y), HashSet<(int x, int y)>> rooms)
         {
-            if (index >= input.Length)
+            for(int i = 0; i < input.Length; i++)
             {
-                return;
-            }
+                char direction = input[i];
 
-            char direction = input[index];
-
-            if (direction == '$')
-            {
-                return;
-            }
-
-            // found a branch
-            if (direction == '(')
-            {
-                (int close, var branches) = this.ParseBranch(input, index);
-
-                // follow the branches
-                foreach (string branch in branches)
+                if (direction == '^') // start
                 {
-                    this.Search(branch, 0, location, seen, depth, paths);
+                    continue;
                 }
 
-                // advance the index until after the processed branch
-                index = close + 1;
-                direction = input[index];
-            }
-
-            // just found a straight path
-            if (Compass.ContainsKey(direction))
-            {
-                // move
-                var newLocation = (location.x + Compass[direction].dx, location.y + Compass[direction].dy);
-
-                if (seen.Contains(newLocation))
+                if (direction == '$') // end
                 {
-                    // can't form circles, so if co-ordinates are in the seen list already this next step is invalid
                     return;
                 }
 
-                seen.Add(newLocation);
+                if (direction == '(') // found the start of a branch, recurse down one level
+                {
+                    (int close, var options) = this.ParseBranchOptions(input, i);
 
-                // add onto the end of the path from the previous location
-                HashSet<(int x, int y)> currentPath = paths[location];
-                paths[newLocation] = new HashSet<(int x, int y)>(currentPath.Append(newLocation));
+                    // follow the branches
+                    foreach (string option in options)
+                    {
+                        this.Search(option, location, seen, rooms);
+                    }
 
-                // follow the path
-                this.Search(input, index + 1, newLocation, seen, depth + 1, paths);
+                    // skip to the end of the branch point
+                    i = close;
+                }
+                else if (Compass.ContainsKey(direction)) // found a door, follow it
+                {
+                    var newLocation = (location.x + Compass[direction].dx, location.y + Compass[direction].dy);
+
+                    if (seen.Contains(newLocation))
+                    {
+                        // no point following existing paths
+                        return;
+                    }
+
+                    seen.Add(newLocation);
+
+                    // add a door between the old and new locations
+                    rooms[location].Add(newLocation);
+                    rooms[newLocation] = new HashSet<(int x, int y)> { location };
+
+                    location = newLocation;
+                }
             }
         }
 
-        private (int, ICollection<string>) ParseBranch(string input, int index)
+        /// <summary>
+        /// From the given index in the input, parse the options available in the 'next' branch. Branches can contain nested branches
+        /// but they will be returned as options of the 'next' branch rather than deconstructed. This allows a recursive descent into
+        /// the branches.
+        /// </summary>
+        /// <param name="input">Input string</param>
+        /// <param name="index">Start index. Note this MUST be the index of an opening bracket for this branch</param>
+        /// <returns>Branch ending point and branch options</returns>
+        private (int branchClose, ICollection<string> options) ParseBranchOptions(string input, int index)
         {
             // find closing bracket
             int close = FindClosingBracket(input, index);
 
-            List<string> options = new List<string>();
+            var options = new List<string>();
             string option = string.Empty;
 
             for (int i = index + 1; i < close; i++)
@@ -121,19 +161,15 @@ namespace AdventOfCode
                 options.Add(option);
             }
 
-            return (close, options.ToArray());
-
-            /*
-            // start branch
-            string substring = input.Substring(index + 1, close - index - 1);
-
-            var branches = substring
-                           .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
-                           .ToArray();
-
-            return branches;*/
+            return (close, options);
         }
 
+        /// <summary>
+        /// From an opening bracket, find the matching closing bracket (i.e. skip over nested brackets)
+        /// </summary>
+        /// <param name="input">Input</param>
+        /// <param name="index">Start index</param>
+        /// <returns>Index of the matching closing bracket</returns>
         private static int FindClosingBracket(string input, int index)
         {
             int openBrackets = 1;
@@ -155,12 +191,6 @@ namespace AdventOfCode
             }
 
             return close;
-        }
-
-        public int Part2(string input)
-        {
-
-            return 0;
         }
     }
 }
