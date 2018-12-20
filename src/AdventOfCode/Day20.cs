@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -21,9 +20,9 @@ namespace AdventOfCode
         {
             (int x, int y) location = (0, 0);
 
-            var paths = new Dictionary<(int x, int y), Queue<(int x, int y)>>
+            var paths = new Dictionary<(int x, int y), HashSet<(int x, int y)>>
             {
-                [location] = new Queue<(int x, int y)>(0)
+                [location] = new HashSet<(int x, int y)>()
             };
 
             var seen = new HashSet<(int x, int y)> { location };
@@ -33,8 +32,13 @@ namespace AdventOfCode
             return paths.Max(kvp => kvp.Value.Count);
         }
 
-        public void Search(string input, int index, (int x, int y) location, HashSet<(int x, int y)> seen, int depth, Dictionary<(int x, int y), Queue<(int x, int y)>> paths)
+        public void Search(string input, int index, (int x, int y) location, HashSet<(int x, int y)> seen, int depth, Dictionary<(int x, int y), HashSet<(int x, int y)>> paths)
         {
+            if (index >= input.Length)
+            {
+                return;
+            }
+
             char direction = input[index];
 
             if (direction == '$')
@@ -45,29 +49,7 @@ namespace AdventOfCode
             // found a branch
             if (direction == '(')
             {
-                // find closing bracket
-                int openBrackets = 1;
-                int close = index;
-
-                while (openBrackets > 0)
-                {
-                    close++;
-
-                    if (input[close] == '(')
-                    {
-                        openBrackets++;
-                    }
-
-                    if (input[close] == ')')
-                    {
-                        openBrackets--;
-                    }
-                }
-
-                // start branch
-                var branches = input.Substring(index + 1, close - index - 1)
-                                    .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
-                                    .ToArray();
+                (int close, var branches) = this.ParseBranch(input, index);
 
                 // follow the branches
                 foreach (string branch in branches)
@@ -95,12 +77,84 @@ namespace AdventOfCode
                 seen.Add(newLocation);
 
                 // add onto the end of the path from the previous location
-                Queue<(int x, int y)> currentPath = paths[location];
-                paths[newLocation] = new Queue<(int x, int y)>(currentPath.Append(newLocation).ToArray());
+                HashSet<(int x, int y)> currentPath = paths[location];
+                paths[newLocation] = new HashSet<(int x, int y)>(currentPath.Append(newLocation));
 
                 // follow the path
                 this.Search(input, index + 1, newLocation, seen, depth + 1, paths);
             }
+        }
+
+        private (int, ICollection<string>) ParseBranch(string input, int index)
+        {
+            // find closing bracket
+            int close = FindClosingBracket(input, index);
+
+            List<string> options = new List<string>();
+            string option = string.Empty;
+
+            for (int i = index + 1; i < close; i++)
+            {
+                if (input[i] == '|')
+                {
+                    options.Add(option);
+                    option = string.Empty;
+                }
+                else if (input[i] == '(')
+                {
+                    // closing bracket
+                    int nestedClose = FindClosingBracket(input, i + 1);
+
+                    // nested branch
+                    option += input.Substring(i, nestedClose - i + 1);
+                    i = nestedClose;
+                }
+                else
+                {
+                    option += input[i];
+                }
+            }
+
+            // add the final option (after the last pipe)
+            if (option != string.Empty)
+            {
+                options.Add(option);
+            }
+
+            return (close, options.ToArray());
+
+            /*
+            // start branch
+            string substring = input.Substring(index + 1, close - index - 1);
+
+            var branches = substring
+                           .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                           .ToArray();
+
+            return branches;*/
+        }
+
+        private static int FindClosingBracket(string input, int index)
+        {
+            int openBrackets = 1;
+            int close = index;
+
+            while (openBrackets > 0)
+            {
+                close++;
+
+                if (input[close] == '(')
+                {
+                    openBrackets++;
+                }
+
+                if (input[close] == ')')
+                {
+                    openBrackets--;
+                }
+            }
+
+            return close;
         }
 
         public int Part2(string input)
