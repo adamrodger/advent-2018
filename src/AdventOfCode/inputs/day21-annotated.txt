@@ -13,11 +13,11 @@
  9: addr 4 2 4				E += C							E += C
 10: bani 4 16777215 4		E &= 16777215
 11: muli 4 65899 4			E *= 65899
-12: bani 4 16777215 4		E &= 16777215					E = ((E & 16777215) * 65899) & 16777215
-13: gtir 256 3 2			C = 256 > D ? 1 : 0				if 256 > D: # jump to 16 which jumps to 28 to do the if check
+12: bani 4 16777215 4		E &= 16777215					E = ((E & 0xFFFFFF) * 65899) & 0xFFFFF
+13: gtir 256 3 2			C = D <= 256 ? 1 : 0			if D <= 256: # jump to 16 which jumps to 28 to do the if check
 14: addr 2 5 5				ip += C								if E == A: return
 15: addi 5 1 5				ip += 1							
-16: seti 27 6 5				ip = 27							
+16: seti 27 6 5				ip = 27			goto 27 + 1				
 17: seti 0 7 2				C = 0							C = 0
 18: addi 2 1 1				B = C + 1					
 19: muli 1 256 1			B *= 256						B = (C + 1) * 256
