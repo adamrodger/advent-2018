@@ -1,0 +1,34 @@
+#ip 5											# A = 0, B = 1, C = 2, D = 3, E = 4, ip = 5
+ 0: seti 123 0 4			E = 123					while E == 0:
+ 1: bani 4 456 4			E &= 456					E = (123 & 456 == 72) ? 1 : 0 
+ 2: eqri 4 72 4				E = E == 72 ? 1 : 0			
+ 3: addr 4 5 5				ip = ip + E
+ 4: seti 0 0 5				ip = 0					end # end the bitwise operator check and start the real program
+ 5: seti 0 8 4				E = 0					E = 0
+													while true: # outer loop
+ 6: bori 4 65536 3			D = E | 65536				D = E | 65536
+ 7: seti 707129 0 4			E = 707129					E = 707129
+														while true: # inner loop
+ 8: bani 3 255 2			C = D & 255						C = D & 255
+ 9: addr 4 2 4				E += C							E += C
+10: bani 4 16777215 4		E &= 16777215
+11: muli 4 65899 4			E *= 65899
+12: bani 4 16777215 4		E &= 16777215					E = ((E & 16777215) * 65899) & 16777215
+13: gtir 256 3 2			C = 256 > D ? 1 : 0				if 256 > D: # jump to 16 which jumps to 28 to do the if check
+14: addr 2 5 5				ip += C								if E == A: return
+15: addi 5 1 5				ip += 1							
+16: seti 27 6 5				ip = 27							
+17: seti 0 7 2				C = 0							C = 0
+18: addi 2 1 1				B = C + 1					
+19: muli 1 256 1			B *= 256						B = (C + 1) * 256
+20: gtrr 1 3 1				B = B > D ? 1 : 0				if B > D:
+21: addr 1 5 5				ip += B								D = C # from line 26
+22: addi 5 1 5				ip += 1							else:
+23: seti 25 2 5				ip = 25			goto 25 + 1			C++ # from line 24
+24: addi 2 1 2				C += 1
+25: seti 17 1 5				ip = 17			goto 17 + 1
+26: setr 2 4 3				D = C
+27: seti 7 4 5				ip = 7						end # inner loop
+28: eqrr 4 0 2				C = E == A ? 1 : 0			# this is the if check
+29: addr 2 5 5				ip += C							# jump off the end
+30: seti 5 2 5				ip = 5					end # big outer loop

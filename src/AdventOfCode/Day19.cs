@@ -82,6 +82,9 @@ namespace AdventOfCode
             {
                 (string opcode, int[] args)[] operations = program.Select(p => (p.Split(' ')[0], p.Numbers())).ToArray();
 
+                HashSet<int> results = new HashSet<int>();
+                int previous = -1;
+
                 int iterations = 0;
                 int[] state = { startState, 0, 0, 0, 0, 0 };
 
@@ -90,15 +93,32 @@ namespace AdventOfCode
                     (string opcode, int[] args) = operations[state[instructionRegister]];
                     state = this.Execute(state, args, opcode);
 
+                    if (state[instructionRegister] == 28)
+                    {
+                        if (results.Count % 100 == 0)
+                        {
+                            Debug.WriteLine($"{results.Count} - {state[4]}");
+                        }
+
+                        if (!results.Add(state[4]))
+                        {
+                            // repeat
+                            Debug.WriteLine($"REPEAT!!!! Part 2: {previous}");
+                            return state;
+                        }
+
+                        previous = state[4];
+                    }
+
                     state[instructionRegister] = state[instructionRegister] + 1;
 
-                    Print(state, operations, state[instructionRegister]);
+                    //Print(state, operations, state[instructionRegister]);
                     iterations++;
 
-                    if (iterations % 100000 == 0)
+                    /*if (iterations % 100000 == 0)
                     {
                         Debug.WriteLine($"{iterations} - {string.Join(" ", state)}");
-                    }
+                    }*/
                 }
 
                 return state;
@@ -137,6 +157,8 @@ namespace AdventOfCode
             /// <param name="pointer">Currently executing instruction pointer</param>
             private static void Print(int[] state, (string opcode, int[] args)[] operations, int pointer)
             {
+                return;
+
                 if (!Debugger.IsAttached)
                 {
                     return;
@@ -158,13 +180,13 @@ namespace AdventOfCode
                     builder.AppendLine();
                 }
 
-                foreach (int blank in Enumerable.Range(1, 6))
+                foreach (int blank in Enumerable.Range(1, 0))
                 {
                     builder.AppendLine();
                 }
 
                 Debug.WriteLine(builder.ToString());
-                System.Threading.Thread.Sleep(100);
+                System.Threading.Thread.Sleep(10);
             }
         }
     }
