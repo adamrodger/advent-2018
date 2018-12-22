@@ -56,6 +56,8 @@
         /// </summary>
         public IList<Instruction> Program { get; private set; }
 
+        private readonly InstructionEventArgs instructionEventArgs;
+
         /// <summary>
         /// Initialises a new instance of the <see cref="Emulator"/> class.
         /// </summary>
@@ -69,6 +71,8 @@
 
             this.Registers = new int[registers];
             this.Cycles = 0;
+
+            this.instructionEventArgs = new InstructionEventArgs();
 
             if (debug)
             {
@@ -91,10 +95,9 @@
 
                 // notify the cycle is complete
                 this.Cycles++;
-                var args = InstructionEventArgs.Default;
-                this.OnInstructionComplete?.Invoke(this, args);
+                this.OnInstructionComplete?.Invoke(this, this.instructionEventArgs);
 
-                if (args.StopExecution)
+                if (this.instructionEventArgs.StopExecution)
                 {
                     return;
                 }
@@ -117,7 +120,7 @@
             var builder = new StringBuilder();
 
             builder.AppendLine($"Cycles: {this.Cycles}");
-            builder.AppendLine($"State: {string.Join("\t\t\t", this.Registers)}\n");
+            builder.AppendLine($"State: {string.Join("\t\t", this.Registers)}\n");
 
             foreach (Instruction instruction in this.Program)
             {
