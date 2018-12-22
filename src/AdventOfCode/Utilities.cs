@@ -50,6 +50,19 @@
             }
         }
 
+        public static IEnumerable<TResult> Select<T, TResult>(this T[,] grid, Func<T, TResult> func)
+        {
+            for (int y = 0; y < grid.GetLength(0); y++)
+            {
+                for (int x = 0; x < grid.GetLength(1); x++)
+                {
+                    T item = grid[y, x];
+
+                    yield return func(item);
+                }
+            }
+        }
+
         public static IEnumerable<T> Search<T>(this T[,] grid, Predicate<T> predicate)
         {
             for (int y = 0; y < grid.GetLength(0); y++)
