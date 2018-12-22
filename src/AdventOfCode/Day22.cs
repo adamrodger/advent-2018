@@ -60,7 +60,7 @@ namespace AdventOfCode
 
                         foreach (Tool nextTool in allowedTools[next])
                         {
-                            graph.AddVertex((x, y, tool), (x, y - 1, nextTool), nextTool == tool ? 1 : 7);
+                            graph.AddVertex((x, y, tool), (x, y - 1, nextTool), nextTool == tool ? 1 : 8);
                         }
                     }
 
@@ -70,7 +70,7 @@ namespace AdventOfCode
 
                         foreach (Tool nextTool in allowedTools[next])
                         {
-                            graph.AddVertex((x, y, tool), (x - 1, y, nextTool), nextTool == tool ? 1 : 7);
+                            graph.AddVertex((x, y, tool), (x - 1, y, nextTool), nextTool == tool ? 1 : 8);
                         }
                     }
 
@@ -80,7 +80,7 @@ namespace AdventOfCode
 
                         foreach (Tool nextTool in allowedTools[next])
                         {
-                            graph.AddVertex((x, y, tool), (x + 1, y, nextTool), nextTool == tool ? 1 : 7);
+                            graph.AddVertex((x, y, tool), (x + 1, y, nextTool), nextTool == tool ? 1 : 8);
                         }
                     }
 
@@ -90,7 +90,7 @@ namespace AdventOfCode
 
                         foreach (Tool nextTool in allowedTools[next])
                         {
-                            graph.AddVertex((x, y, tool), (x, y + 1, nextTool), nextTool == tool ? 1 : 7);
+                            graph.AddVertex((x, y, tool), (x, y + 1, nextTool), nextTool == tool ? 1 : 8);
                         }
                     }
                 }
@@ -99,6 +99,7 @@ namespace AdventOfCode
             (var _, int cost) = graph.GetShortestPath((0, 0, Tool.Torch), (target.x, target.y, Tool.Torch));
 
             // guessed 1080 -- too low
+            // guessed 1090 -- too low
             return cost;
         }
 
