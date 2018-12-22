@@ -2,6 +2,8 @@
 
 namespace AdventOfCode
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// Solver for Day 5
     /// </summary>
@@ -9,24 +11,26 @@ namespace AdventOfCode
     {
         public int React(string input)
         {
+            List<char> reaction = new List<char>(input);
             bool found = false;
 
             do
             {
                 found = false;
 
-                for (int i = 0; i < input.Length - 1; i++)
+                for (int i = 0; i < reaction.Count - 1; i++)
                 {
-                    if (Math.Abs(input[i] - input[i + 1]) == 32)
+                    if (Math.Abs(reaction[i] - reaction[i + 1]) == 32)
                     {
-                        input = input.Remove(i, 2);
+                        reaction.RemoveAt(i); // remove this index
+                        reaction.RemoveAt(i); // remove next (which just shuffled to this index)
                         found = true;
                         i--;
                     }
                 }
             } while (found);
 
-            return input.Length;
+            return reaction.Count;
         }
 
         public int Part2(string input)
