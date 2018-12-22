@@ -2,7 +2,6 @@ using System.IO;
 using Xunit;
 using Xunit.Abstractions;
 
-
 namespace AdventOfCode.Tests
 {
     public class Day22Tests

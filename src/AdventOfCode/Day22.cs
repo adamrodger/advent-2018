@@ -38,7 +38,8 @@ namespace AdventOfCode
             };
 
             // build up a graph which depends on which tool we currently have equipped
-            var graph = new Graph<(int x, int y, Tool tool)>();
+            Func<(int x, int y, Tool tool), (int x, int y, Tool tool), int> manhattanHeuristic = (n1, n2) => Math.Abs(n1.x - n2.x) + Math.Abs(n1.y - n2.y);
+            var graph = new Graph<(int x, int y, Tool tool)>(manhattanHeuristic);
 
             map.ForEach((x, y, cell) =>
             {
@@ -154,11 +155,17 @@ namespace AdventOfCode
         public Dictionary<TNode, List<(TNode node, int cost)>> Vertices { get; }
 
         /// <summary>
+        /// Additional heuristic used to order nodes (effectively turns Dijkstra into A* algorithm) 
+        /// </summary>
+        private readonly Func<TNode, TNode, int> heuristic;
+
+        /// <summary>
         /// Initialises a new instance of the <see cref="Graph"/> class.
         /// </summary>
-        public Graph()
+        public Graph(Func<TNode, TNode, int> heuristic = null)
         {
             this.Vertices = new Dictionary<TNode, List<(TNode next, int cost)>>();
+            this.heuristic = heuristic ?? ((_, __) => 0);
         }
 
         /// <summary>
@@ -183,7 +190,6 @@ namespace AdventOfCode
             var previous = new Dictionary<TNode, TNode>();
             var distances = new Dictionary<TNode, int> { [start] = 0 };
             var search = new List<TNode> { start };
-            var seen = new HashSet<TNode>();
 
             List<TNode> path = null;
             int pathCost = -1;
@@ -191,7 +197,7 @@ namespace AdventOfCode
             while (search.Any())
             {
                 // sort by distance to get the most promising path at the moment
-                search.Sort((n1, n2) => distances[n1] - distances[n2]);
+                search.Sort((n1, n2) => (distances[n1] + this.heuristic(n1, finish)) - (distances[n2] + this.heuristic(n2, finish)));
 
                 // pop closest node
                 TNode current = search.First();
@@ -213,13 +219,8 @@ namespace AdventOfCode
                 }
 
                 // walk outwards along edges to see if we can find a closer node
-                foreach ((TNode next, int cost) in this.Vertices[current].OrderBy(edge => edge.cost))
+                foreach ((TNode next, int cost) in this.Vertices[current])
                 {
-                    if (seen.Contains(next))
-                    {
-                        continue;
-                    }
-
                     var newDistance = distances[current] + cost;
 
                     // found the first or a closer route to the next node (from the current node)
@@ -231,8 +232,6 @@ namespace AdventOfCode
                         search.Add(next);
                     }
                 }
-
-                seen.Add(current);
             }
 
             Debug.Assert(path != null, "No path found");
