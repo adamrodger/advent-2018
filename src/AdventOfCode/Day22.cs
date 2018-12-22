@@ -28,6 +28,8 @@ namespace AdventOfCode
         {
             int[,] map = BuildMap(depth, target);
 
+            Print(map);
+
             var allowedTools = new Dictionary<int, Tool[]>
             {
                 [0] = new[] { Tool.Climbing, Tool.Torch }, // rocky
@@ -47,17 +49,56 @@ namespace AdventOfCode
 
             map.ForEach((x, y, cell) =>
             {
-                var adjacent = map.Adjacent4(x, y);
-
-                foreach (Tool tool in allowedTools[cell])
+                foreach (Tool tool in allowedTools[cell % 3])
                 {
                     // if the adjacent square allows this tool, add an edge with cost 1
+                    // else the adjacent square doesn't allow this tool, add an edge with cost 7
 
-                    // if the adjacent square doesn't allow this tool, add an edge with cost 7
+                    if (y > 0) // up
+                    {
+                        var next = map[y - 1, x] % 3;
+
+                        foreach (Tool nextTool in allowedTools[next])
+                        {
+                            graph.AddVertex((x, y, tool), (x, y - 1, nextTool), nextTool == tool ? 1 : 7);
+                        }
+                    }
+
+                    if (x > 0) // left
+                    {
+                        var next = map[y, x - 1] % 3;
+
+                        foreach (Tool nextTool in allowedTools[next])
+                        {
+                            graph.AddVertex((x, y, tool), (x - 1, y, nextTool), nextTool == tool ? 1 : 7);
+                        }
+                    }
+
+                    if (x + 1 < map.GetLength(1)) // right
+                    {
+                        var next = map[y, x + 1] % 3;
+
+                        foreach (Tool nextTool in allowedTools[next])
+                        {
+                            graph.AddVertex((x, y, tool), (x + 1, y, nextTool), nextTool == tool ? 1 : 7);
+                        }
+                    }
+
+                    if (y + 1 < map.GetLength(0)) // down
+                    {
+                        var next = map[y + 1, x] % 3;
+
+                        foreach (Tool nextTool in allowedTools[next])
+                        {
+                            graph.AddVertex((x, y, tool), (x, y + 1, nextTool), nextTool == tool ? 1 : 7);
+                        }
+                    }
                 }
             });
 
-            (var path, int cost) = graph.GetShortestPath((0, 0, Tool.Torch), (target.x, target.y, Tool.Torch));
+            (var _, int cost) = graph.GetShortestPath((0, 0, Tool.Torch), (target.x, target.y, Tool.Torch));
+
+            // guessed 1080 -- too low
             return cost;
         }
 
@@ -126,7 +167,7 @@ namespace AdventOfCode
         Neither, Torch, Climbing
     }
 
-    public class Graph<TNode> where TNode : IEquatable<TNode>
+    public class Graph<TNode>
     {
         public Dictionary<TNode, List<(TNode node, int cost)>> Vertices { get; }
 
@@ -149,35 +190,20 @@ namespace AdventOfCode
         public (List<TNode> path, int cost) GetShortestPath(TNode start, TNode finish)
         {
             var previous = new Dictionary<TNode, TNode>();
-            var distances = new Dictionary<TNode, int>();
-            var nodes = new List<TNode>();
+            var distances = new Dictionary<TNode, int> { [start] = 0 };
+            var search = new List<TNode> { start} ;
 
             List<TNode> path = null;
             int pathCost = -1;
 
-            // initialise everything to +inf except start node
-            foreach (var node in this.Vertices.Keys)
-            {
-                if (node.Equals(start))
-                {
-                    distances[node] = 0;
-                }
-                else
-                {
-                    distances[node] = int.MaxValue;
-                }
-
-                nodes.Add(node);
-            }
-
-            while (nodes.Count != 0)
+            while (search.Any())
             {
                 // sort by distance
-                nodes.Sort((n1, n2) => distances[n1] - distances[n2]);
+                search.Sort((n1, n2) => distances[n1] - distances[n2]);
 
                 // pop closest node
-                TNode current = nodes.First();
-                nodes.Remove(current);
+                TNode current = search.First();
+                search.Remove(current);
 
                 // check if reached destination
                 if (current.Equals(finish))
@@ -194,24 +220,29 @@ namespace AdventOfCode
                     break;
                 }
 
-                /*if (distances[current] == int.MaxValue)
+                if (!distances.ContainsKey(current))
                 {
-                    break;
-                }*/
+                    // don't know how to get to this node yet - how did it get queued?!
+                    Debug.Fail("How did we queue a node when we've not been there yet?");
+                }
 
                 // walk outwards along edges to see if we can find a closer node
                 foreach ((TNode next, int cost) in this.Vertices[current].OrderBy(edge => edge.cost))
                 {
                     var distance = distances[current] + cost;
 
-                    // found a closer route back to the current node
-                    if (distance < distances[next])
+                    // found the first or a closer route to the next node (from the current node)
+                    if (!distances.ContainsKey(next) || distance < distances[next])
                     {
                         distances[next] = distance;
                         previous[next] = current;
+
+                        search.Add(next);
                     }
                 }
             }
+
+            Debug.Assert(path != null, "No path found");
 
             return (path, pathCost);
         }

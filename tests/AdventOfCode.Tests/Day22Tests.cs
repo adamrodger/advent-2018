@@ -36,13 +36,13 @@ namespace AdventOfCode.Tests
 
             Assert.Equal(expected, result);
         }
-        /*
+        
         [Fact]
         public void Part2_SampleInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            var expected = 45;
 
-            var result = solver.Part2(GetSampleInput());
+            var result = solver.Part2(510, (10, 10));
 
             Assert.Equal(expected, result);
         }
@@ -52,10 +52,10 @@ namespace AdventOfCode.Tests
         {
             var expected = -1;
 
-            var result = solver.Part2(GetRealInput());
+            var result = solver.Part2(5355, (14, 796));
             output.WriteLine($"Day 22 - Part 2 - {result}");
 
             Assert.Equal(expected, result);
-        }*/
+        }
     }
 }
