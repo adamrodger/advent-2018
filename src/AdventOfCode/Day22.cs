@@ -45,6 +45,17 @@ namespace AdventOfCode
             {
                 foreach (Tool tool in allowedTools[cell % 3])
                 {
+                    // add two-way edge to self with cost 7 for changing tools
+                    foreach (Tool otherTool in allowedTools[cell % 3])
+                    {
+                        if (tool == otherTool)
+                        {
+                            continue;
+                        }
+
+                        graph.AddVertex((x, y, tool), (x, y, otherTool), cost: 7);
+                    }
+
                     // if the adjacent square allows this tool, add an edge with cost 1
                     // else the adjacent square doesn't allow this tool, add an edge with cost 1 + 7 for changing tool
                     foreach ((int x, int y) move in new[] { (0, -1), (-1, 0), (1, 0), (0, 1) })
@@ -54,6 +65,7 @@ namespace AdventOfCode
 
                         if (dy < 0 || dy >= map.GetLength(0) || dx < 0 || dx >= map.GetLength(1))
                         {
+                            // fell off the map
                             continue;
                         }
 
@@ -61,7 +73,13 @@ namespace AdventOfCode
 
                         foreach (Tool nextTool in allowedTools[next])
                         {
-                            graph.AddVertex((x, y, tool), (dx, dy, nextTool), nextTool == tool ? 1 : 8);
+                            if (nextTool != tool)
+                            {
+                                // can only move to other squares with the same tool
+                                continue;
+                            }
+
+                            graph.AddVertex((x, y, tool), (dx, dy, nextTool));
                         }
                     }
                 }
