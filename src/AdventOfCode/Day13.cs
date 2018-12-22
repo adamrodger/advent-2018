@@ -4,6 +4,8 @@ using System.Linq;
 
 namespace AdventOfCode
 {
+    using Utilities;
+
     /// <summary>
     /// Solver for Day 13
     /// </summary>

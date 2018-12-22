@@ -5,6 +5,7 @@
     using System.Diagnostics;
     using System.Linq;
     using System.Text;
+    using Utilities;
 
     /// <summary>
     /// Emulator for ElfCode assembly language

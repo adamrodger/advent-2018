@@ -3,6 +3,8 @@ using System.Linq;
 
 namespace AdventOfCode
 {
+    using Utilities;
+
     /// <summary>
     /// Solver for Day 18
     /// </summary>

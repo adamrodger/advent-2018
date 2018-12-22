@@ -6,6 +6,7 @@ namespace AdventOfCode
     using System.Linq;
     using System.Text;
     using MoreLinq;
+    using Utilities;
 
     /// <summary>
     /// Solver for Day 15
@@ -172,23 +173,18 @@ namespace AdventOfCode
         private void ParseInput(string[] input)
         {
             // initial parse
-            for (int y = 0; y < input.Length; y++)
+            input.ForEachChar((x, y, tile) =>
             {
-                for (int x = 0; x < input[y].Length; x++)
+                // mark whether tile was habitable
+                this.Tiles[(x, y)] = tile != '#';
+
+                if (tile == 'G' || tile == 'E')
                 {
-                    char tile = input[y][x];
-
-                    // mark whether tile was habitable
-                    this.Tiles[(x, y)] = tile != '#';
-
-                    if (tile == 'G' || tile == 'E')
-                    {
-                        // parse the player
-                        var player = new Player(tile, x, y, tile == 'E' ? this.elfPower : 3);
-                        this.Players.Add(player);
-                    }
+                    // parse the player
+                    var player = new Player(tile, x, y, tile == 'E' ? this.elfPower : 3);
+                    this.Players.Add(player);
                 }
-            }
+            });
         }
     }
 

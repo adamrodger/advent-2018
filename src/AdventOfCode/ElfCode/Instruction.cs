@@ -1,5 +1,7 @@
 ﻿namespace AdventOfCode.ElfCode
 {
+    using Utilities;
+
     /// <summary>
     /// A single instruction in an ElfCode program
     /// </summary>

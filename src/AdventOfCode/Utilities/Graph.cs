@@ -1,4 +1,4 @@
-namespace AdventOfCode
+namespace AdventOfCode.Utilities
 {
     using System;
     using System.Collections.Generic;

@@ -6,6 +6,7 @@ namespace AdventOfCode
     using System.Diagnostics;
     using System.Linq;
     using System.Text;
+    using Utilities;
 
     /// <summary>
     /// Solver for Day 22
