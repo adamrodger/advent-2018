@@ -50,7 +50,7 @@ namespace AdventOfCode.Tests
         [Fact]
         public void Part2_RealInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            var expected = 1092;
 
             var result = solver.Part2(5355, (14, 796));
             output.WriteLine($"Day 22 - Part 2 - {result}");
