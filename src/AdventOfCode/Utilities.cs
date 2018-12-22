@@ -79,6 +79,22 @@
             }
         }
 
+        public static IEnumerable<T> Where<T>(this T[,] grid, Func<int, int, T, bool> predicate)
+        {
+            for (int y = 0; y < grid.GetLength(0); y++)
+            {
+                for (int x = 0; x < grid.GetLength(1); x++)
+                {
+                    T item = grid[y, x];
+
+                    if (predicate(x, y, item))
+                    {
+                        yield return item;
+                    }
+                }
+            }
+        }
+
         public static void Print<T>(this T[,] grid)
         {
             if (!Debugger.IsAttached)
@@ -102,6 +118,29 @@
             }
 
             return value;
+        }
+
+        public static IEnumerable<T> Adjacent4<T>(this T[,] grid, int x, int y)
+        {
+            if (y - 1 > 0)
+            {
+                yield return grid[y - 1, x];
+            }
+
+            if (x - 1 > 0)
+            {
+                yield return grid[y, x - 1];
+            }
+
+            if (x + 1 < grid.GetLength(1))
+            {
+                yield return grid[y, x + 1];
+            }
+
+            if (y + 1 < grid.GetLength(0))
+            {
+                yield return grid[y + 1, x];
+            }
         }
     }
 }
