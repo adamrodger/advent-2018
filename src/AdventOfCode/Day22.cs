@@ -38,8 +38,12 @@ namespace AdventOfCode
             };
 
             // build up a graph which depends on which tool we currently have equipped
-            Func<(int x, int y, Tool tool), (int x, int y, Tool tool), int> manhattanHeuristic = (n1, n2) => Math.Abs(n1.x - n2.x) + Math.Abs(n1.y - n2.y);
-            var graph = new Graph<(int x, int y, Tool tool)>(manhattanHeuristic);
+            int Heuristic((int x, int y, Tool tool) current, (int x, int y, Tool tool) end)
+            {
+                int manhattan = Math.Abs(current.x - end.x) + Math.Abs(current.y - end.y);
+                return manhattan;// + (current.tool != end.tool ? 7 : 0);
+            }
+            var graph = new Graph<(int x, int y, Tool tool)>(Heuristic);
 
             map.ForEach((x, y, cell) =>
             {
@@ -85,11 +89,12 @@ namespace AdventOfCode
                 }
             });
 
-            (_, int cost) = graph.GetShortestPath((0, 0, Tool.Torch), (target.x, target.y, Tool.Torch));
+            List<((int x, int y, Tool tool) node, int distance)> path = graph.GetShortestPath((0, 0, Tool.Torch), (target.x, target.y, Tool.Torch));
 
             // guessed 1080 -- too low
             // guessed 1090 -- too low
-            return cost;
+            // actual answer 1092
+            return path.Last().distance;
         }
 
         private static int[,] BuildMap(int depth, (int x, int y) target)
@@ -159,103 +164,5 @@ namespace AdventOfCode
     public enum Tool
     {
         Neither, Torch, Climbing
-    }
-
-    /// <summary>
-    /// A generic graph of nodes with edges between them
-    /// </summary>
-    /// <typeparam name="TNode">Type of the node</typeparam>
-    public class Graph<TNode>
-    {
-        /// <summary>
-        /// Nodes in the graph
-        /// </summary>
-        public Dictionary<TNode, List<(TNode node, int cost)>> Vertices { get; }
-
-        /// <summary>
-        /// Additional heuristic used to order nodes (effectively turns Dijkstra into A* algorithm) 
-        /// </summary>
-        private readonly Func<TNode, TNode, int> heuristic;
-
-        /// <summary>
-        /// Initialises a new instance of the <see cref="Graph"/> class.
-        /// </summary>
-        public Graph(Func<TNode, TNode, int> heuristic = null)
-        {
-            this.Vertices = new Dictionary<TNode, List<(TNode next, int cost)>>();
-            this.heuristic = heuristic ?? ((_, __) => 0);
-        }
-
-        /// <summary>
-        /// Create a path from start to end with the given cost (default to 1)
-        /// </summary>
-        /// <param name="start">Start node</param>
-        /// <param name="end">End node</param>
-        /// <param name="cost">Cost of moving from start to end (default to 1)</param>
-        public void AddVertex(TNode start, TNode end, int cost = 1)
-        {
-            this.Vertices.GetOrCreate(start).Add((end, cost));
-        }
-
-        /// <summary>
-        /// Find the shortest path from the start node to the end node
-        /// </summary>
-        /// <param name="start">Start node</param>
-        /// <param name="finish">End node</param>
-        /// <returns>Shortest path and cost of that path</returns>
-        public (List<TNode> path, int cost) GetShortestPath(TNode start, TNode finish)
-        {
-            var previous = new Dictionary<TNode, TNode>();
-            var distances = new Dictionary<TNode, int> { [start] = 0 };
-            var search = new List<TNode> { start };
-
-            List<TNode> path = null;
-            int pathCost = -1;
-
-            while (search.Any())
-            {
-                // sort by distance to get the most promising path at the moment
-                search.Sort((n1, n2) => (distances[n1] + this.heuristic(n1, finish)) - (distances[n2] + this.heuristic(n2, finish)));
-
-                // pop closest node
-                TNode current = search.First();
-                search.Remove(current);
-
-                // check if we've reached destination
-                if (current.Equals(finish))
-                {
-                    path = new List<TNode>();
-                    pathCost = distances[current];
-
-                    while (previous.ContainsKey(current))
-                    {
-                        path.Add(current);
-                        current = previous[current];
-                    }
-
-                    break;
-                }
-
-                // walk outwards along edges to see if we can find a closer node
-                foreach ((TNode next, int cost) in this.Vertices[current])
-                {
-                    var newDistance = distances[current] + cost;
-
-                    // found the first or a closer route to the next node (from the current node)
-                    if (!distances.ContainsKey(next) || newDistance < distances[next])
-                    {
-                        distances[next] = newDistance;
-                        previous[next] = current;
-
-                        search.Add(next);
-                    }
-                }
-            }
-
-            Debug.Assert(path != null, "No path found");
-
-            path.Reverse();
-            return (path, pathCost);
-        }
     }
 }
