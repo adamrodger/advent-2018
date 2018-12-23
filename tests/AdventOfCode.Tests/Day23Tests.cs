@@ -22,20 +22,24 @@ namespace AdventOfCode.Tests
             return input;
         }
 
-        private static string[] GetSampleInput()
-        {
-            return new string[]
-            {
-                
-            };
-        }
-
         [Fact]
         public void Part1_SampleInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            string[] input =
+            {
+                "pos=<0,0,0>, r=4",
+                "pos=<1,0,0>, r=1",
+                "pos=<4,0,0>, r=3",
+                "pos=<0,2,0>, r=1",
+                "pos=<0,5,0>, r=3",
+                "pos=<0,0,3>, r=1",
+                "pos=<1,1,1>, r=1",
+                "pos=<1,1,2>, r=1",
+                "pos=<1,3,1>, r=1"
+            };
+            var expected = 7;
 
-            var result = solver.Part1(GetSampleInput());
+            var result = solver.Part1(input);
 
             Assert.Equal(expected, result);
         }
@@ -54,9 +58,19 @@ namespace AdventOfCode.Tests
         [Fact]
         public void Part2_SampleInput_ProducesCorrectResponse()
         {
-            var expected = -1;
+            string[] input =
+            {
+                "pos=<10,12,12>, r=2",
+                "pos=<12,14,12>, r=2",
+                "pos=<16,12,12>, r=4",
+                "pos=<14,14,14>, r=6",
+                "pos=<50,50,50>, r=200",
+                "pos=<10,10,10>, r=5"
+            };
 
-            var result = solver.Part2(GetSampleInput());
+            var expected = 36;
+
+            var result = solver.Part2(input);
 
             Assert.Equal(expected, result);
         }
