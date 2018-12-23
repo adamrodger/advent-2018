@@ -52,7 +52,7 @@ namespace AdventOfCode
             int bestDistance = -1;
 
             // start with a really big box and then gradually shrink the box until it's only 1 square in size
-            while (boxSize > 1)
+            while (boxSize >= 1)
             {
                 // argh - left this outside the loop originally so it wasn't zeroing in on the best smaller box
                 (int x, int y, int z, int count) best = (0, 0, 0, 0);
