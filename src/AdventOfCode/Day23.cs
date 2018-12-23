@@ -48,47 +48,51 @@ namespace AdventOfCode
             int minZ = bots.Min(b => b.Z);
             int maxZ = bots.Max(b => b.Z);
 
-            (int cx, int cy, int cz, int count) best = (0, 0, 0, 0);
-            bool bestChanged;
+            int boxSize = (maxX - minX) * 2; // start with a huuuuuge box
+            int bestDistance = -1;
 
-            do
+            // start with a really big box and then gradually shrink the box until it's only 1 square in size
+            while (boxSize > 1)
             {
-                bestChanged = false;
+                // argh - left this outside the loop originally so it wasn't zeroing in on the best smaller box
+                (int x, int y, int z, int count) best = (0, 0, 0, 0);
 
-                // start with a really big 3d box and then gradually 'zoom in' by making the box smaller centered around the current best point
-                foreach (int x in Enumerable.Range(minX, maxX - minX))
-                foreach (int y in Enumerable.Range(minY, maxY - minY))
-                foreach (int z in Enumerable.Range(minZ, maxZ - minZ))
+                for (int x = minX; x < maxX + 1; x += boxSize)
+                for (int y = minY; y < maxY + 1; y += boxSize)
+                for (int z = minZ; z < maxZ + 1; z += boxSize) // this effectively cuts the size of the entire space into smaller and smaller boxes
                 {
-                    // find bots in range of this point
-                    var inRange = bots.Count(b => Math.Abs(b.X - x) + Math.Abs(b.Y - y) + Math.Abs(b.Z - z) <= b.Radius);
+                    // find bots in range of this box
+                    var inRange = bots.Count(b => (Math.Abs(b.X - x) + Math.Abs(b.Y - y) + Math.Abs(b.Z - z) - b.Radius) / boxSize <= 0);
 
                     if (inRange > best.count)
                     {
                         // most we've found so far
                         best = (x, y, z, inRange);
-                        bestChanged = true;
+                        bestDistance = Math.Abs(best.x) + Math.Abs(best.y) + Math.Abs(best.z);
                     }
-                    else if (inRange == best.count && Math.Abs(best.cx) + Math.Abs(best.cy) + Math.Abs(best.cz) > Math.Abs(x) + Math.Abs(y) + Math.Abs(z))
+                    else if (inRange == best.count && bestDistance > Math.Abs(x) + Math.Abs(y) + Math.Abs(z))
                     {
-                        // new one has same number of bots in range but is closer to 0,0,0
+                        // new box has same number of bots in range but is closer to 0,0,0
                         best = (x, y, z, inRange);
-                        bestChanged = true;
+                        bestDistance = Math.Abs(best.x) + Math.Abs(best.y) + Math.Abs(best.z);
                     }
                 }
 
-                // we've found the best point in this big box, now halve the box size and centre around the best point
+                // we've found the best box after splitting up the big box, now halve the box size and try the smaller boxes
                 // +/- 1 means best.x/y/z is in the middle
-                minX = (best.cx - 1) * 2;
-                maxX = (best.cx + 1) * 2;
-                minY = (best.cy - 1) * 2;
-                maxY = (best.cy + 1) * 2;
-                minZ = (best.cz - 1) * 2;
-                maxZ = (best.cz + 1) * 2;
+                boxSize /= 2;
+                minX = best.x - 1 - boxSize;
+                maxX = best.x + 1 + boxSize;
+                minY = best.y - 1 - boxSize;
+                maxY = best.y + 1 + boxSize;
+                minZ = best.z - 1 - boxSize;
+                maxZ = best.z + 1 + boxSize;
             }
-            while (bestChanged);
 
-            return Math.Abs(best.cx) + Math.Abs(best.cy) + Math.Abs(best.cz);
+            // when box size gets down to 1, we've found a single best point
+            return bestDistance;
+
+            // guessed 121493970 -- too low
         }
     }
 
