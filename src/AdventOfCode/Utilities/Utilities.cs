@@ -11,7 +11,7 @@
     {
         public static int[] Numbers(this string input)
         {
-            MatchCollection matches = Regex.Matches(input, @"\d+");
+            MatchCollection matches = Regex.Matches(input, @"-?\d+");
             return matches.Cast<Match>().Select(m => m.Value).Select(int.Parse).ToArray();
         }
 
